@@ -44,7 +44,14 @@ const data = [
   },
 ];
 
+const headers = [
+  { attributeName: "name", displayText: "Nombre" },
+  { attributeName: "description", displayText: "Descripción" },
+  { attributeName: "amount", displayText: "Cantidad" },
+];
+
 export const Primary = Template.bind({});
 Primary.args = {
+  headers: headers,
   rows: data,
 };
