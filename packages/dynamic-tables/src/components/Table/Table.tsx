@@ -58,6 +58,8 @@ export default function ExpenseTableComponent({ rows }: TableProps) {
     return Object.values(MovementKey).includes(keyEvent);
   };
 
+  useEffect(() => {}, [selectedCell]);
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (isMovementKey(event.key) && selectedCell.trId !== null) {
@@ -103,27 +105,25 @@ export default function ExpenseTableComponent({ rows }: TableProps) {
     setSelectedCell({ columnId, trId });
   };
 
-  const renderRow = (expense: any) => {
+  const renderRow = (row: any) => {
     return (
       <tr
-        key={expense.id}
-        row-id={expense.id}
+        key={row.id}
+        row-id={row.id}
         onClick={handleBodyTrClick}
-        className={
-          isSelectedCell(selectedCell, "", expense.id) ? "selected" : ""
-        }
+        className={isSelectedCell(selectedCell, "", row.id) ? "selected" : ""}
       >
         {headers.map((data) => (
           <td
             className={
-              isSelectedCell(selectedCell, data.attributeName, expense.id)
+              isSelectedCell(selectedCell, data.attributeName, row.id)
                 ? "selected"
                 : ""
             }
             column-id={data.attributeName}
             key={data.attributeName}
           >
-            {expense[data.attributeName]}
+            {row[data.attributeName]}
           </td>
         ))}
       </tr>
