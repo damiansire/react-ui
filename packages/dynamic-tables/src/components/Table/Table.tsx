@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./table.css";
 
-export interface TableProps {
-  rows: any;
+interface Row {
+  id: string;
+  [key: string]: string; // Dynamic key-value pairs for each column
+}
+
+interface Header {
+  attributeName: string;
+  displayText: string;
+}
+
+interface TableProps {
+  headers: Header[];
+  rows: Row[];
+}
+
+interface SelectedCell {
+  trId: string | null;
+  columnId: string | null;
 }
 
 enum MovementKey {
@@ -17,13 +33,7 @@ interface SelectedCell {
   columnId: string | null;
 }
 
-const headers = [
-  { attributeName: "name", displayText: "Nombre" },
-  { attributeName: "description", displayText: "Descripcion" },
-  { attributeName: "amount", displayText: "Cantidad" },
-];
-
-export default function ExpenseTableComponent({ rows }: TableProps) {
+const TableComponent = ({ rows, headers }: TableProps) => {
   const [selectedCell, setSelectedCell] = useState<SelectedCell>({
     trId: null,
     columnId: null,
@@ -34,12 +44,12 @@ export default function ExpenseTableComponent({ rows }: TableProps) {
     const columnIndex = headers.findIndex((x) => x.attributeName === columnId);
     const columnLength = headers.length;
     let newColumnIndex;
-    let nextIndex;
+    let nextRowIndex;
     if (eventKey === MovementKey.ArrowUp) {
-      nextIndex = (rowIndex - 1 + expenseLength) % expenseLength;
+      nextRowIndex = (rowIndex - 1 + expenseLength) % expenseLength;
       window.scrollBy(0, -50);
     } else if (eventKey === MovementKey.ArrowDown) {
-      nextIndex = (rowIndex + 1) % expenseLength;
+      nextRowIndex = (rowIndex + 1) % expenseLength;
       window.scrollBy(0, 50);
     } else if (eventKey === MovementKey.ArrowLeft) {
       newColumnIndex = (columnIndex - 1 + columnLength) % columnLength;
@@ -50,15 +60,13 @@ export default function ExpenseTableComponent({ rows }: TableProps) {
       newColumnIndex !== undefined
         ? headers[newColumnIndex].attributeName
         : columnId;
-    const finalIndex = nextIndex !== undefined ? nextIndex : rowIndex;
-    return { rowId: finalIndex, columnId: columnIdFinal };
+    const finalIndex = nextRowIndex !== undefined ? nextRowIndex : rowIndex;
+    return { nextRowIndex: finalIndex, columnId: columnIdFinal };
   };
 
   const isMovementKey = (keyEvent: string) => {
     return Object.values(MovementKey).includes(keyEvent);
   };
-
-  useEffect(() => {}, [selectedCell]);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -67,13 +75,13 @@ export default function ExpenseTableComponent({ rows }: TableProps) {
         const rowIndex = rows.findIndex(
           (expense) => expense.id === selectedCell.trId
         );
-        const { rowId, columnId } = getNextIndex(
+        const { nextRowIndex, columnId } = getNextIndex(
           rowIndex,
           event.key,
           rows.length,
           selectedCell.columnId
         );
-        const nextExpense = rows[rowId];
+        const nextExpense = rows[nextRowIndex];
         const nextCell = tableRef.current?.querySelector(
           `tr[row-id="${nextExpense.id}"] td[column-id="${columnId}"]`
         ) as HTMLTableCellElement | null;
@@ -135,11 +143,13 @@ export default function ExpenseTableComponent({ rows }: TableProps) {
       <thead>
         <tr>
           {headers.map((x) => (
-            <th> {x.displayText}</th>
+            <th key={x.attributeName}>{x.displayText}</th>
           ))}
         </tr>
       </thead>
       <tbody>{rows.map(renderRow)}</tbody>
     </table>
   );
-}
+};
+
+export default TableComponent;
