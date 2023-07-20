@@ -1,7 +1,7 @@
 {
-  "name": "YOUR_PACKAGE_NAME",
+  "name": "react-dinamic-tables",
   "version": "1.0.0",
-  "description": "YOUR_PACKAGE_DESCRIPTION",
+  "description": "React package for creating dynamic and interactive tables in web applications.",
   "scripts": {
     "rollup-build-lib": "rollup -c",
     "storybook": "storybook dev -p 6006",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+YOUR_REPOSITORY_URL.git"
+    "url": "git+https://github.com/damiansire/react-dynamic-tables.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "YOUR_REPOSITORY_URL/issues"
+    "url": "https://github.com/damiansire/react-dynamic-tables/issues"
   },
-  "homepage": "YOUR_REPOSITORY_URL#readme",
+  "homepage": "https://github.com/damiansire/react-dynamic-tables#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.3",
     "@rollup/plugin-node-resolve": "^15.1.0",
