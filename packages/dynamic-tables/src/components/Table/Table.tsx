@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./table.css";
 
 interface Row {
   id: string;
-  [key: string]: string; // Dynamic key-value pairs for each column
+  [key: string]: string;
 }
 
 interface Header {
@@ -22,16 +22,29 @@ interface SelectedCell {
 }
 
 enum MovementKey {
-  ArrowDown = "ArrowDown",
-  ArrowUp = "ArrowUp",
-  ArrowLeft = "ArrowLeft",
-  ArrowRight = "ArrowRight",
+  ArrowDown = 40,
+  ArrowUp = 38,
+  ArrowLeft = 37,
+  ArrowRight = 39,
 }
 
-interface SelectedCell {
-  trId: string | null;
-  columnId: string | null;
-}
+const isMovementKey = (keyCode: number) => {
+  return Object.values(MovementKey).includes(keyCode);
+};
+
+const Cell = ({
+  value,
+  isSelected,
+  columnName,
+}: {
+  value: string;
+  columnName: string;
+  isSelected: boolean;
+}) => (
+  <td className={isSelected ? "selected" : ""} column-id={columnName}>
+    {value}
+  </td>
+);
 
 const TableComponent = ({ rows, headers }: TableProps) => {
   const [selectedCell, setSelectedCell] = useState<SelectedCell>({
@@ -40,103 +53,119 @@ const TableComponent = ({ rows, headers }: TableProps) => {
   });
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const getNextIndex = (rowIndex, eventKey, expenseLength, columnId) => {
-    const columnIndex = headers.findIndex((x) => x.attributeName === columnId);
-    const columnLength = headers.length;
-    let newColumnIndex;
-    let nextRowIndex;
-    if (eventKey === MovementKey.ArrowUp) {
-      nextRowIndex = (rowIndex - 1 + expenseLength) % expenseLength;
-      window.scrollBy(0, -50);
-    } else if (eventKey === MovementKey.ArrowDown) {
-      nextRowIndex = (rowIndex + 1) % expenseLength;
-      window.scrollBy(0, 50);
-    } else if (eventKey === MovementKey.ArrowLeft) {
-      newColumnIndex = (columnIndex - 1 + columnLength) % columnLength;
-    } else if (eventKey === MovementKey.ArrowRight) {
-      newColumnIndex = (columnIndex + 1) % columnLength;
-    }
-    const columnIdFinal =
-      newColumnIndex !== undefined
-        ? headers[newColumnIndex].attributeName
-        : columnId;
-    const finalIndex = nextRowIndex !== undefined ? nextRowIndex : rowIndex;
-    return { nextRowIndex: finalIndex, columnId: columnIdFinal };
-  };
+  const getNextIndex = useCallback(
+    (
+      rowIndex: number,
+      keyCode: number,
+      rowCount: number,
+      columnId: string | null
+    ) => {
+      const columnIndex = headers.findIndex(
+        (x) => x.attributeName === columnId
+      );
+      const columnLength = headers.length;
+      let newColumnIndex;
+      let nextRowIndex;
 
-  const isMovementKey = (keyEvent: string) => {
-    return Object.values(MovementKey).includes(keyEvent);
-  };
+      if (keyCode === MovementKey.ArrowUp) {
+        nextRowIndex = (rowIndex - 1 + rowCount) % rowCount;
+        window.scrollBy(0, -50);
+      } else if (keyCode === MovementKey.ArrowDown) {
+        nextRowIndex = (rowIndex + 1) % rowCount;
+        window.scrollBy(0, 50);
+      } else if (keyCode === MovementKey.ArrowLeft) {
+        newColumnIndex = (columnIndex - 1 + columnLength) % columnLength;
+      } else if (keyCode === MovementKey.ArrowRight) {
+        newColumnIndex = (columnIndex + 1) % columnLength;
+      }
 
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (isMovementKey(event.key) && selectedCell.trId !== null) {
+      const columnIdFinal =
+        newColumnIndex !== undefined
+          ? headers[newColumnIndex].attributeName
+          : columnId;
+
+      const finalIndex = nextRowIndex !== undefined ? nextRowIndex : rowIndex;
+      return { nextRowIndex: finalIndex, columnId: columnIdFinal };
+    },
+    [headers]
+  );
+
+  const handleKey = useCallback(
+    (event: KeyboardEvent) => {
+      if (isMovementKey(event.keyCode) && selectedCell.trId !== null) {
         event.preventDefault();
         const rowIndex = rows.findIndex(
           (expense) => expense.id === selectedCell.trId
         );
         const { nextRowIndex, columnId } = getNextIndex(
           rowIndex,
-          event.key,
+          event.keyCode,
           rows.length,
           selectedCell.columnId
         );
+
         const nextExpense = rows[nextRowIndex];
         const nextCell = tableRef.current?.querySelector(
           `tr[row-id="${nextExpense.id}"] td[column-id="${columnId}"]`
         ) as HTMLTableCellElement | null;
+
         if (nextCell) {
           nextCell.focus();
           setSelectedCell({ trId: nextExpense.id, columnId });
         }
       }
-    };
+    },
+    [rows, selectedCell, getNextIndex]
+  );
 
+  useEffect(() => {
     document.addEventListener("keydown", handleKey);
 
     return () => {
       document.removeEventListener("keydown", handleKey);
     };
-  }, [rows, selectedCell]);
+  }, [handleKey]);
 
-  const isSelectedCell = (
-    selectedCell: SelectedCell,
-    cellId: string,
-    expenseId: string
-  ) => {
-    return selectedCell.trId === expenseId && selectedCell.columnId === cellId;
-  };
+  const isSelectedCell = useCallback(
+    (cellId: string, expenseId: string) => {
+      return (
+        selectedCell.trId === expenseId && selectedCell.columnId === cellId
+      );
+    },
+    [selectedCell]
+  );
 
-  const handleBodyTrClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
-    const trId = event.currentTarget.getAttribute("row-id");
-    const columnId = event.target.getAttribute("column-id");
-    setSelectedCell({ columnId, trId });
-  };
+  const handleBodyTrClick = useCallback(
+    (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
+      const trId = event.currentTarget.getAttribute("row-id");
+      const columnId = event.target.getAttribute("column-id");
+      setSelectedCell({ columnId, trId });
+    },
+    []
+  );
 
-  const renderRow = (row: any) => {
-    return (
-      <tr
-        key={row.id}
-        row-id={row.id}
-        onClick={handleBodyTrClick}
-        className={isSelectedCell(selectedCell, "", row.id) ? "selected" : ""}
-      >
-        {headers.map((data) => (
-          <td
-            className={
-              isSelectedCell(selectedCell, data.attributeName, row.id)
-                ? "selected"
-                : ""
-            }
-            column-id={data.attributeName}
-            key={data.attributeName}
-          >
-            {row[data.attributeName]}
-          </td>
-        ))}
-      </tr>
-    );
-  };
+  const renderRow = useCallback(
+    (row: Row) => {
+      return (
+        <tr
+          key={row.id}
+          row-id={row.id}
+          onClick={handleBodyTrClick}
+          className={isSelectedCell("", row.id) ? "selected" : ""}
+        >
+          {headers.map((data) => (
+            <Cell
+              key={data.attributeName}
+              value={row[data.attributeName]}
+              columnName={data.attributeName}
+              isSelected={isSelectedCell(data.attributeName, row.id)}
+            />
+          ))}
+        </tr>
+      );
+    },
+    [headers, isSelectedCell, handleBodyTrClick]
+  );
 
   return (
     <table ref={tableRef}>
@@ -150,6 +179,11 @@ const TableComponent = ({ rows, headers }: TableProps) => {
       <tbody>{rows.map(renderRow)}</tbody>
     </table>
   );
+};
+
+TableComponent.defaultProps = {
+  headers: [],
+  rows: [],
 };
 
 export default TableComponent;
