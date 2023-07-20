@@ -22,14 +22,14 @@ interface SelectedCell {
 }
 
 enum MovementKey {
-  ArrowDown = 40,
-  ArrowUp = 38,
-  ArrowLeft = 37,
-  ArrowRight = 39,
+  ArrowDown = "ArrowDown",
+  ArrowUp = "ArrowUp",
+  ArrowLeft = "ArrowLeft",
+  ArrowRight = "ArrowRight",
 }
 
-const isMovementKey = (keyCode: number) => {
-  return Object.values(MovementKey).includes(keyCode);
+const isMovementKey = (keyEvent: string) => {
+  return Object.values(MovementKey).includes(keyEvent);
 };
 
 const Cell = ({
@@ -56,7 +56,7 @@ const TableComponent = ({ rows, headers }: TableProps) => {
   const getNextIndex = useCallback(
     (
       rowIndex: number,
-      keyCode: number,
+      eventKey: any,
       rowCount: number,
       columnId: string | null
     ) => {
@@ -67,15 +67,15 @@ const TableComponent = ({ rows, headers }: TableProps) => {
       let newColumnIndex;
       let nextRowIndex;
 
-      if (keyCode === MovementKey.ArrowUp) {
+      if (eventKey === MovementKey.ArrowUp) {
         nextRowIndex = (rowIndex - 1 + rowCount) % rowCount;
         window.scrollBy(0, -50);
-      } else if (keyCode === MovementKey.ArrowDown) {
+      } else if (eventKey === MovementKey.ArrowDown) {
         nextRowIndex = (rowIndex + 1) % rowCount;
         window.scrollBy(0, 50);
-      } else if (keyCode === MovementKey.ArrowLeft) {
+      } else if (eventKey === MovementKey.ArrowLeft) {
         newColumnIndex = (columnIndex - 1 + columnLength) % columnLength;
-      } else if (keyCode === MovementKey.ArrowRight) {
+      } else if (eventKey === MovementKey.ArrowRight) {
         newColumnIndex = (columnIndex + 1) % columnLength;
       }
 
@@ -92,14 +92,14 @@ const TableComponent = ({ rows, headers }: TableProps) => {
 
   const handleKey = useCallback(
     (event: KeyboardEvent) => {
-      if (isMovementKey(event.keyCode) && selectedCell.trId !== null) {
+      if (isMovementKey(event.key) && selectedCell.trId !== null) {
         event.preventDefault();
         const rowIndex = rows.findIndex(
           (expense) => expense.id === selectedCell.trId
         );
         const { nextRowIndex, columnId } = getNextIndex(
           rowIndex,
-          event.keyCode,
+          event.key,
           rows.length,
           selectedCell.columnId
         );
