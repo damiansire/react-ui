@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "./interfaces/Header";
 import { Row } from "./interfaces/Row";
+import { getCell } from "./libs/tableHelp";
 
 interface SelectedCell {
   trId: string | null;
@@ -34,23 +35,24 @@ export const useTableSelection = (
 
   const getNextIndex = useCallback(
     (
-      rowIndex: number,
+      currentRowIndex: number,
       eventKey: string,
       rowCount: number,
-      columnId: string | null
+      currentColumnId: string | null,
+      headers: Header[]
     ) => {
       const columnIndex = headers.findIndex(
-        (x) => x.attributeName === columnId
+        (x) => x.attributeName === currentColumnId
       );
       const columnLength = headers.length;
       let newColumnIndex;
       let nextRowIndex;
 
       if (eventKey === MovementKey.ArrowUp) {
-        nextRowIndex = (rowIndex - 1 + rowCount) % rowCount;
+        nextRowIndex = (currentRowIndex - 1 + rowCount) % rowCount;
         window.scrollBy(0, -50);
       } else if (eventKey === MovementKey.ArrowDown) {
-        nextRowIndex = (rowIndex + 1) % rowCount;
+        nextRowIndex = (currentRowIndex + 1) % rowCount;
         window.scrollBy(0, 50);
       } else if (eventKey === MovementKey.ArrowLeft) {
         newColumnIndex = (columnIndex - 1 + columnLength) % columnLength;
@@ -61,9 +63,10 @@ export const useTableSelection = (
       const columnIdFinal =
         newColumnIndex !== undefined
           ? headers[newColumnIndex].attributeName
-          : columnId;
+          : currentColumnId;
 
-      const finalIndex = nextRowIndex !== undefined ? nextRowIndex : rowIndex;
+      const finalIndex =
+        nextRowIndex !== undefined ? nextRowIndex : currentRowIndex;
       return { nextRowIndex: finalIndex, columnId: columnIdFinal };
     },
     [headers]
@@ -80,13 +83,12 @@ export const useTableSelection = (
           rowIndex,
           event.key,
           rows.length,
-          selectedCell.columnId
+          selectedCell.columnId,
+          headers
         );
 
         const nextExpense = rows[nextRowIndex];
-        const nextCell = tableRef.current?.querySelector(
-          `tr[row-id="${nextExpense.id}"] td[column-id="${columnId}"]`
-        ) as HTMLTableCellElement | null;
+        const nextCell = getCell(tableRef, nextExpense.id, columnId);
 
         if (nextCell) {
           nextCell.focus();
@@ -94,7 +96,7 @@ export const useTableSelection = (
         }
       }
     },
-    [rows, selectedCell, getNextIndex]
+    [rows, selectedCell]
   );
 
   useEffect(() => {

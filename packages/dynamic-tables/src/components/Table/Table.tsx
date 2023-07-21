@@ -61,6 +61,26 @@ const TableComponent = ({ rows, headers }: TableProps) => {
     [headers, isSelectedCell, handleBodyTrClick]
   );
 
+  const isWritableCharacter = (key: string) => {
+    // Comprueba si la key es una letra (mayúscula o minúscula), un símbolo o un número
+    const letrasSimbolosYnumeros =
+      /^[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]$/;
+    return letrasSimbolosYnumeros.test(key);
+  };
+
+  //Handle edit
+  useEffect(() => {
+    function pressKey({ key }: { key: string }) {
+      if (isWritableCharacter(key)) {
+        //edito la celda
+      }
+    }
+    window.addEventListener("keydown", pressKey);
+    return () => {
+      window.removeEventListener("keydown", pressKey);
+    };
+  }, []);
+
   return (
     <table ref={tableRef}>
       <thead>
