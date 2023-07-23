@@ -68,18 +68,46 @@ const TableComponent = ({ rows, headers }: TableProps) => {
     return letrasSimbolosYnumeros.test(key);
   };
 
+  // State para manejar el contenido editado de la celda
+  const [editedCellValue, setEditedCellValue] = useState<string | null>(null);
+
   //Handle edit
   useEffect(() => {
     function pressKey({ key }: { key: string }) {
-      if (isWritableCharacter(key)) {
-        //edito la celda
+      if (
+        isWritableCharacter(key) &&
+        selectedCell.trId &&
+        selectedCell.columnId
+      ) {
+        // Establece el contenido editado solo si hay una celda seleccionada
+        setEditedCellValue(key);
       }
     }
+
+    function updateCellValue() {
+      if (editedCellValue !== null) {
+        // Aquí puedes manejar la actualización del contenido de la celda en tu estado o enviarlo a la API, etc.
+        // Por ahora, actualicemos solo el valor de la celda seleccionada en el estado del componente
+        // Esto dependerá de cómo tengas estructurado el estado para tus celdas en la tabla.
+        // Reemplaza 'selectedCell.trId' y 'selectedCell.columnId' con las propiedades correctas en tu estado.
+        // E.g., `selectedCell.trId` sería el ID de la fila seleccionada y `selectedCell.columnId` el nombre de la columna.
+        console.log(
+          "Celda actualizada:",
+          selectedCell.trId,
+          selectedCell.columnId,
+          editedCellValue
+        );
+        setEditedCellValue(null);
+      }
+    }
+
     window.addEventListener("keydown", pressKey);
+    window.addEventListener("keyup", updateCellValue);
     return () => {
       window.removeEventListener("keydown", pressKey);
+      window.removeEventListener("keyup", updateCellValue);
     };
-  }, []);
+  }, [selectedCell, editedCellValue]);
 
   return (
     <table ref={tableRef}>
