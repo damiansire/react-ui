@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./table.css";
 import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
+import { Header } from "./interfaces/Header";
 
 interface TableProps {
   headers: Header[];
@@ -21,6 +22,11 @@ const Cell = ({ value, isSelected, columnName }: ICell) => (
 );
 
 const TableComponent = ({ rows, headers }: TableProps) => {
+  // State para manejar el contenido editado de la celda
+  const [editedCellValues, setEditedCellValues] = useState<{
+    [key: string]: string;
+  }>({});
+
   const tableRef = useRef<HTMLTableElement>(null);
 
   const [selectedCell, handleKey, handleBodyTrClick] = useTableSelection(
@@ -47,14 +53,17 @@ const TableComponent = ({ rows, headers }: TableProps) => {
           onClick={handleBodyTrClick}
           className={isSelectedCell("", row.id) ? "selected" : ""}
         >
-          {headers.map((data) => (
-            <Cell
-              key={data.attributeName}
-              value={row[data.attributeName]}
-              columnName={data.attributeName}
-              isSelected={isSelectedCell(data.attributeName, row.id)}
-            />
-          ))}
+          {headers.map((data) => {
+            const cellValue = row[data.attributeName];
+            return (
+              <Cell
+                key={data.attributeName}
+                value={cellValue}
+                columnName={data.attributeName}
+                isSelected={isSelectedCell(data.attributeName, row.id)}
+              />
+            );
+          })}
         </tr>
       );
     },
@@ -68,9 +77,6 @@ const TableComponent = ({ rows, headers }: TableProps) => {
     return letrasSimbolosYnumeros.test(key);
   };
 
-  // State para manejar el contenido editado de la celda
-  const [editedCellValue, setEditedCellValue] = useState<string | null>(null);
-
   //Handle edit
   useEffect(() => {
     function pressKey({ key }: { key: string }) {
@@ -79,35 +85,23 @@ const TableComponent = ({ rows, headers }: TableProps) => {
         selectedCell.trId &&
         selectedCell.columnId
       ) {
-        // Establece el contenido editado solo si hay una celda seleccionada
-        setEditedCellValue(key);
-      }
-    }
-
-    function updateCellValue() {
-      if (editedCellValue !== null) {
-        // Aquí puedes manejar la actualización del contenido de la celda en tu estado o enviarlo a la API, etc.
-        // Por ahora, actualicemos solo el valor de la celda seleccionada en el estado del componente
-        // Esto dependerá de cómo tengas estructurado el estado para tus celdas en la tabla.
-        // Reemplaza 'selectedCell.trId' y 'selectedCell.columnId' con las propiedades correctas en tu estado.
-        // E.g., `selectedCell.trId` sería el ID de la fila seleccionada y `selectedCell.columnId` el nombre de la columna.
-        console.log(
-          "Celda actualizada:",
-          selectedCell.trId,
-          selectedCell.columnId,
-          editedCellValue
-        );
-        setEditedCellValue(null);
+        setEditedCellValues((lastCellValues) => {
+          const currentCell = rows.find((x) => x.id === selectedCell.trId);
+          if (lastCellValues[selectedCell.trId]) {
+            lastCellValues[selectedCell.trId] = currentCell;
+          }
+          lastCellValues[selectedCell.trId][selectedCell.columnId] =
+            lastCellValues[selectedCell.trId][selectedCell.columnId];
+          return lastCellValues;
+        });
       }
     }
 
     window.addEventListener("keydown", pressKey);
-    window.addEventListener("keyup", updateCellValue);
     return () => {
       window.removeEventListener("keydown", pressKey);
-      window.removeEventListener("keyup", updateCellValue);
     };
-  }, [selectedCell, editedCellValue]);
+  }, [selectedCell, editedCellValues]);
 
   return (
     <table ref={tableRef}>
