@@ -54,7 +54,10 @@ const TableComponent = ({ rows, headers }: TableProps) => {
           className={isSelectedCell("", row.id) ? "selected" : ""}
         >
           {headers.map((data) => {
-            const cellValue = row[data.attributeName];
+            let cellValue = row[data.attributeName];
+            if (editedCellValues[row.id]) {
+              cellValue = editedCellValues[row.id][data.attributeName];
+            }
             return (
               <Cell
                 key={data.attributeName}
@@ -86,13 +89,28 @@ const TableComponent = ({ rows, headers }: TableProps) => {
         selectedCell.columnId
       ) {
         setEditedCellValues((lastCellValues) => {
-          const currentCell = rows.find((x) => x.id === selectedCell.trId);
-          if (lastCellValues[selectedCell.trId]) {
-            lastCellValues[selectedCell.trId] = currentCell;
+          // Copia inmutable del objeto de valores editados
+          const newCellValues = { ...lastCellValues };
+
+          // Obtiene la fila actual
+          const currentRow = rows.find((x) => x.id === selectedCell.trId);
+
+          // Si la celda está en la lista de filas modificadas, toma el valor de allí
+          if (newCellValues.hasOwnProperty(selectedCell.trId)) {
+            let currentValue =
+              newCellValues[selectedCell.trId][selectedCell.columnId];
+            const newRowValue = currentValue + key;
+            newCellValues[selectedCell.trId][selectedCell.columnId] =
+              newRowValue;
+          } else {
+            let currentValue = currentRow[selectedCell.columnId];
+            const newRowValue = currentValue + key;
+            newCellValues[selectedCell.trId] = { ...currentRow };
+            newCellValues[selectedCell.trId][selectedCell.columnId] =
+              newRowValue;
           }
-          lastCellValues[selectedCell.trId][selectedCell.columnId] =
-            lastCellValues[selectedCell.trId][selectedCell.columnId];
-          return lastCellValues;
+
+          return newCellValues;
         });
       }
     }
@@ -101,7 +119,7 @@ const TableComponent = ({ rows, headers }: TableProps) => {
     return () => {
       window.removeEventListener("keydown", pressKey);
     };
-  }, [selectedCell, editedCellValues]);
+  }, [selectedCell, editedCellValues, rows]);
 
   return (
     <table ref={tableRef}>
