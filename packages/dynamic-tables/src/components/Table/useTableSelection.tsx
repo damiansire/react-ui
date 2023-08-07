@@ -110,7 +110,7 @@ export const useTableSelection = (
   const handleBodyTrClick = useCallback(
     (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
       const trId = event.currentTarget.getAttribute("row-id");
-      const columnId = event.target.getAttribute("column-id");
+      const columnId = (event.target as HTMLElement).getAttribute("column-id");
       setSelectedCell({ columnId, trId });
     },
     []

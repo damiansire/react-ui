@@ -15,6 +15,11 @@ interface ICell {
   isSelected: boolean;
 }
 
+interface NewCell {
+  trId: string;
+  columnId: string;
+}
+
 const Cell = ({ value, isSelected, columnName }: ICell) => (
   <td className={isSelected ? "selected" : ""} column-id={columnName}>
     {value}
