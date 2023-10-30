@@ -3,17 +3,7 @@ import "./table.css";
 import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
 import { Header } from "./interfaces/Header";
-
-interface TableProps {
-  headers: Header[];
-  rows: Row[];
-}
-
-interface ICell {
-  value: string;
-  columnName: string;
-  isSelected: boolean;
-}
+import { ICell, TableProps } from "./interfaces/TableProps";
 
 interface NewCell {
   trId: string;
@@ -42,9 +32,7 @@ const TableComponent = ({ rows, headers }: TableProps) => {
 
   const isSelectedCell = useCallback(
     (cellId: string, expenseId: string) => {
-      return (
-        selectedCell.trId === expenseId && selectedCell.columnId === cellId
-      );
+      return selectedCell.trId === expenseId && selectedCell.columnId === cellId;
     },
     [selectedCell]
   );
@@ -80,19 +68,14 @@ const TableComponent = ({ rows, headers }: TableProps) => {
 
   const isWritableCharacter = (key: string) => {
     // Comprueba si la key es una letra (mayúscula o minúscula), un símbolo o un número
-    const letrasSimbolosYnumeros =
-      /^[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]$/;
+    const letrasSimbolosYnumeros = /^[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]$/;
     return letrasSimbolosYnumeros.test(key);
   };
 
   //Handle edit
   useEffect(() => {
     function pressKey({ key }: { key: string }) {
-      if (
-        isWritableCharacter(key) &&
-        selectedCell.trId &&
-        selectedCell.columnId
-      ) {
+      if (isWritableCharacter(key) && selectedCell.trId && selectedCell.columnId) {
         setEditedCellValues((lastCellValues) => {
           // Copia inmutable del objeto de valores editados
           const newCellValues = { ...lastCellValues };
@@ -102,17 +85,14 @@ const TableComponent = ({ rows, headers }: TableProps) => {
 
           // Si la celda está en la lista de filas modificadas, toma el valor de allí
           if (newCellValues.hasOwnProperty(selectedCell.trId)) {
-            let currentValue =
-              newCellValues[selectedCell.trId][selectedCell.columnId];
+            let currentValue = newCellValues[selectedCell.trId][selectedCell.columnId];
             const newRowValue = currentValue + key;
-            newCellValues[selectedCell.trId][selectedCell.columnId] =
-              newRowValue;
+            newCellValues[selectedCell.trId][selectedCell.columnId] = newRowValue;
           } else {
             let currentValue = currentRow[selectedCell.columnId];
             const newRowValue = currentValue + key;
             newCellValues[selectedCell.trId] = { ...currentRow };
-            newCellValues[selectedCell.trId][selectedCell.columnId] =
-              newRowValue;
+            newCellValues[selectedCell.trId][selectedCell.columnId] = newRowValue;
           }
 
           return newCellValues;
