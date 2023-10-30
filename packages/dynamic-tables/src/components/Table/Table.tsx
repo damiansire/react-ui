@@ -16,8 +16,32 @@ const Cell = ({ value, isSelected, columnName }: ICell) => (
   </td>
 );
 
+const getHeadersFromRows = (rows: Row[]): Header[] => {
+  const headersSet = rows.reduce((accumulator, currentValue) => {
+    Object.keys(currentValue).forEach((key) => {
+      accumulator.add(key);
+    });
+    return accumulator;
+  }, new Set<string>());
+
+  const headersArray = Array.from(headersSet);
+
+  // Mapear el array de claves en un array de objetos Header
+  const headerObjects: Header[] = headersArray.map((attributeName) => ({
+    attributeName,
+    displayText: attributeName, // Puedes establecer el valor predeterminado
+  }));
+
+  return headerObjects;
+};
+
 const TableComponent = ({ rows, headers, options }: TableProps) => {
   const noRowsText = options.noRowsText ? options.noRowsText : "No data";
+
+  let rendersHeaders: Header[] = headers;
+  if (rendersHeaders.length === 0 && options.HeadersAutoFill) {
+    rendersHeaders = getHeadersFromRows(rows);
+  }
   // State para manejar el contenido editado de la celda
   const [editedCellValues, setEditedCellValues] = useState<{
     [key: string]: string;
@@ -107,38 +131,9 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
     };
   }, [selectedCell, editedCellValues, rows]);
 
-  const getHeadersFromRows = (rows: Row[]): Header[] => {
-    const headersSet = rows.reduce((accumulator, currentValue) => {
-      Object.keys(currentValue).forEach((key) => {
-        accumulator.add(key);
-      });
-      return accumulator;
-    }, new Set<string>());
-
-    const headersArray = Array.from(headersSet);
-
-    // Mapear el array de claves en un array de objetos Header
-    const headerObjects: Header[] = headersArray.map((attributeName) => ({
-      attributeName,
-      displayText: attributeName, // Puedes establecer el valor predeterminado
-    }));
-
-    return headerObjects;
-  };
-
-  const rendersHeaders: Header[] =
-    headers.length > 0 ? headers : getHeadersFromRows(rows);
-
-  return (
-    <table ref={tableRef}>
-      <thead>
-        <tr>
-          {headers.map((x) => (
-            <th key={x.attributeName}>{x.displayText}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
+  const renderRows = () => {
+    return (
+      <>
         {rows.length > 0 ? (
           rows.map((row) => renderRow(row, rendersHeaders))
         ) : (
@@ -148,7 +143,20 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
             </td>
           </tr>
         )}
-      </tbody>
+      </>
+    );
+  };
+
+  return (
+    <table ref={tableRef}>
+      <thead>
+        <tr>
+          {rendersHeaders.map((x) => (
+            <th key={x.attributeName}>{x.displayText}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>{renderRows()}</tbody>
     </table>
   );
 };

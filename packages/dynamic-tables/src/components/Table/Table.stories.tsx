@@ -70,3 +70,18 @@ CustomEmptyTableMessage.args = {
     noRowsText: "Hey, check your data, there are no rows.",
   },
 };
+
+export const NoHeaders = Template.bind({});
+NoHeaders.args = {
+  headers: [],
+  rows: data,
+};
+
+export const HeadersAutoFill = Template.bind({});
+HeadersAutoFill.args = {
+  headers: [],
+  rows: data,
+  options: {
+    HeadersAutoFill: true,
+  },
+};
