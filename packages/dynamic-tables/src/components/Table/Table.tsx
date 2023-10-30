@@ -151,9 +151,11 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
     <table ref={tableRef}>
       <thead>
         <tr>
-          {rendersHeaders.map((x) => (
-            <th key={x.attributeName}>{x.displayText}</th>
-          ))}
+          {rendersHeaders.length > 0 ? (
+            rendersHeaders.map((x) => <th key={x.attributeName}>{x.displayText}</th>)
+          ) : (
+            <th>No headers. Consider adding autofill option</th>
+          )}
         </tr>
       </thead>
       <tbody>{renderRows()}</tbody>
