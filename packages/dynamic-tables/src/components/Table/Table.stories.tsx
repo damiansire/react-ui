@@ -56,8 +56,17 @@ Primary.args = {
   rows: data,
 };
 
-export const NoData = Template.bind({});
-NoData.args = {
+export const EmptyTableMessage = Template.bind({});
+EmptyTableMessage.args = {
   headers: headers,
   rows: [],
+};
+
+export const CustomEmptyTableMessage = Template.bind({});
+CustomEmptyTableMessage.args = {
+  headers: headers,
+  rows: [],
+  options: {
+    noRowsText: "Hey, check your data, there are no rows.",
+  },
 };
