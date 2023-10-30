@@ -1,5 +1,5 @@
 import React from "react";
-import { ComponentStory, ComponentMeta } from "@storybook/react";
+import { ComponentStory, ComponentMeta, Meta, StoryFn } from "@storybook/react";
 import Table from "./Table";
 
 // You can learn about this: https://storybook.js.org/docs/react/writing-stories/introduction
@@ -7,9 +7,9 @@ import Table from "./Table";
 export default {
   title: "Table",
   component: Table,
-} as ComponentMeta<typeof Table>;
+} as Meta;
 
-const Template: ComponentStory<typeof Table> = (args) => <Table {...args} />;
+const Template: StoryFn = (args) => <Table {...args} />;
 
 const data = [
   {
