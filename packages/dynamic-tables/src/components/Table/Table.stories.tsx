@@ -1,5 +1,5 @@
 import React from "react";
-import { ComponentStory, ComponentMeta, Meta, StoryFn } from "@storybook/react";
+import { Meta, StoryFn } from "@storybook/react";
 import Table from "./Table";
 
 // You can learn about this: https://storybook.js.org/docs/react/writing-stories/introduction
@@ -54,4 +54,10 @@ export const Primary = Template.bind({});
 Primary.args = {
   headers: headers,
   rows: data,
+};
+
+export const Secondary = Template.bind({});
+Secondary.args = {
+  headers: headers,
+  rows: [],
 };
