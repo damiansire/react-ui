@@ -105,17 +105,25 @@ const TableComponent = ({ rows, headers }: TableProps) => {
       window.removeEventListener("keydown", pressKey);
     };
   }, [selectedCell, editedCellValues, rows]);
-
   return (
     <table ref={tableRef}>
       <thead>
         <tr>
-          {headers.map((x) => (
-            <th key={x.attributeName}>{x.displayText}</th>
-          ))}
+          {headers.length !== 0 &&
+            headers.map((x) => <th key={x.attributeName}>{x.displayText}</th>)}
         </tr>
       </thead>
-      <tbody>{rows.map(renderRow)}</tbody>
+      <tbody>
+        {rows.length > 0 ? (
+          rows.map(renderRow)
+        ) : (
+          <tr>
+            <td colSpan={headers.length} className="no-data">
+              No data
+            </td>
+          </tr>
+        )}
+      </tbody>
     </table>
   );
 };
