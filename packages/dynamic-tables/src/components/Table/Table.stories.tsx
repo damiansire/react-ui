@@ -56,8 +56,8 @@ Primary.args = {
   rows: data,
 };
 
-export const Secondary = Template.bind({});
-Secondary.args = {
+export const NoData = Template.bind({});
+NoData.args = {
   headers: headers,
   rows: [],
 };
