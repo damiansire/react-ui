@@ -44,7 +44,7 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
   }
   // State para manejar el contenido editado de la celda
   const [editedCellValues, setEditedCellValues] = useState<{
-    [key: string]: string;
+    [rowId: string]: { [columnId: string]: string };
   }>({});
 
   const tableRef = useRef<HTMLTableElement>(null);
@@ -106,27 +106,26 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
   useEffect(() => {
     function pressKey(event: KeyboardEvent) {
       const { key } = event;
-      if (isWritableCharacter(event) && selectedCell.trId && selectedCell.columnId) {
+      const trId = selectedCell.trId;
+      const columnId = selectedCell.columnId;
+      if (isWritableCharacter(event) && trId && columnId) {
         setEditedCellValues((lastCellValues) => {
-          // Copia inmutable del objeto de valores editados
-          const newCellValues = { ...lastCellValues };
+          // Obtiene la fila actual del dataset original
+          const currentRow = rows.find((x) => x.id === trId);
 
-          // Obtiene la fila actual
-          const currentRow = rows.find((x) => x.id === selectedCell.trId);
+          // Valor base: el ya editado si existe, sino el del dataset original
+          const baseRow = lastCellValues[trId] ?? currentRow;
+          const currentValue = baseRow ? baseRow[columnId] ?? "" : "";
+          const newRowValue = currentValue + key;
 
-          // Si la celda está en la lista de filas modificadas, toma el valor de allí
-          if (newCellValues.hasOwnProperty(selectedCell.trId)) {
-            let currentValue = newCellValues[selectedCell.trId][selectedCell.columnId];
-            const newRowValue = currentValue + key;
-            newCellValues[selectedCell.trId][selectedCell.columnId] = newRowValue;
-          } else {
-            let currentValue = currentRow[selectedCell.columnId];
-            const newRowValue = currentValue + key;
-            newCellValues[selectedCell.trId] = { ...currentRow };
-            newCellValues[selectedCell.trId][selectedCell.columnId] = newRowValue;
-          }
-
-          return newCellValues;
+          // Copia inmutable de cada nivel tocado (no muta el estado previo)
+          return {
+            ...lastCellValues,
+            [trId]: {
+              ...(lastCellValues[trId] ?? currentRow),
+              [columnId]: newRowValue,
+            },
+          };
         });
       }
     }
