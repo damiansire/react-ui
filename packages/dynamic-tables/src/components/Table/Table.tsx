@@ -63,7 +63,7 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
   );
 
   const renderRow = useCallback(
-    (row: Row, rendersHeaders: []) => {
+    (row: Row, rowHeaders: Header[]) => {
       return (
         <tr
           key={row.id}
@@ -71,7 +71,7 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
           onClick={handleBodyTrClick}
           className={isSelectedCell("", row.id) ? "selected" : ""}
         >
-          {rendersHeaders.map((data) => {
+          {rowHeaders.map((data) => {
             let cellValue = row[data.attributeName];
             if (editedCellValues[row.id]) {
               cellValue = editedCellValues[row.id][data.attributeName];
@@ -88,7 +88,7 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
         </tr>
       );
     },
-    [headers, isSelectedCell, handleBodyTrClick]
+    [isSelectedCell, handleBodyTrClick, editedCellValues]
   );
 
   const isWritableCharacter = (event: KeyboardEvent) => {
