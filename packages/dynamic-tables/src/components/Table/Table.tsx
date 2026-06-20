@@ -147,7 +147,7 @@ const TableComponent = ({
           rows.map((row) => renderRow(row, rendersHeaders))
         ) : (
           <tr>
-            <td colSpan={headers.length} className="no-data">
+            <td colSpan={rendersHeaders.length || 1} className="no-data">
               {noRowsText}
             </td>
           </tr>
