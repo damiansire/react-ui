@@ -1,0 +1,16 @@
+# Normaliza los finales de línea: LF en el repo, conversión automática al checkout.
+* text=auto eol=lf
+
+# Archivos que siempre son binarios (no tocar EOL).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Excluir ruido del tarball de releases en GitHub (linguist / export-ignore).
+*.stories.tsx linguist-documentation
+.storybook/ export-ignore
+*.stories.tsx export-ignore
