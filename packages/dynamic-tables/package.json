@@ -9,14 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/damiansire/react-dynamic-tables.git"
+    "url": "git+https://github.com/damiansire/react-ui.git",
+    "directory": "packages/dynamic-tables"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/damiansire/react-dynamic-tables/issues"
+    "url": "https://github.com/damiansire/react-ui/issues"
   },
-  "homepage": "https://github.com/damiansire/react-dynamic-tables#readme",
+  "homepage": "https://github.com/damiansire/react-ui/tree/main/packages/dynamic-tables#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.3",
     "@rollup/plugin-node-resolve": "^15.1.0",
