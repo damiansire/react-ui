@@ -13,7 +13,7 @@
     "directory": "packages/dynamic-tables"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/damiansire/react-ui/issues"
   },
@@ -44,6 +44,13 @@
   "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
   },
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
