@@ -1,0 +1,8 @@
+{
+  "name": "react-ui",
+  "private": true,
+  "description": "Reusable React UI components, organized as an npm-workspaces monorepo. Each component is published to npm under its own name.",
+  "workspaces": [
+    "packages/*"
+  ]
+}
