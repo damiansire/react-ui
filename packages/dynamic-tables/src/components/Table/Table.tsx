@@ -35,7 +35,11 @@ const getHeadersFromRows = (rows: Row[]): Header[] => {
   return headerObjects;
 };
 
-const TableComponent = ({ rows, headers, options }: TableProps) => {
+const TableComponent = ({
+  rows = [],
+  headers = [],
+  options = {},
+}: TableProps) => {
   const noRowsText = options.noRowsText ? options.noRowsText : "No data";
 
   let rendersHeaders: Header[] = headers;
@@ -166,12 +170,6 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
       <tbody>{renderRows()}</tbody>
     </table>
   );
-};
-
-TableComponent.defaultProps = {
-  headers: [],
-  rows: [],
-  options: {},
 };
 
 export default TableComponent;
