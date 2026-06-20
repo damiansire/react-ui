@@ -91,16 +91,22 @@ const TableComponent = ({ rows, headers, options }: TableProps) => {
     [headers, isSelectedCell, handleBodyTrClick]
   );
 
-  const isWritableCharacter = (key: string) => {
-    // Comprueba si la key es una letra (mayúscula o minúscula), un símbolo o un número
-    const letrasSimbolosYnumeros = /^[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]$/;
-    return letrasSimbolosYnumeros.test(key);
+  const isWritableCharacter = (event: KeyboardEvent) => {
+    // Acepta cualquier carácter imprimible (incluido el espacio y Unicode);
+    // descarta teclas de control y combinaciones con modificadores.
+    return (
+      event.key.length === 1 &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    );
   };
 
   //Handle edit
   useEffect(() => {
-    function pressKey({ key }: { key: string }) {
-      if (isWritableCharacter(key) && selectedCell.trId && selectedCell.columnId) {
+    function pressKey(event: KeyboardEvent) {
+      const { key } = event;
+      if (isWritableCharacter(event) && selectedCell.trId && selectedCell.columnId) {
         setEditedCellValues((lastCellValues) => {
           // Copia inmutable del objeto de valores editados
           const newCellValues = { ...lastCellValues };
