@@ -2,7 +2,7 @@
 // igual que lo haría un usuario externo. Sirve para verificar que el
 // `exports`/`types` map resuelve `dist/index.d.ts` y que los tipos públicos
 // compilan desde afuera del paquete.
-import { Table, getCell } from "react-dinamic-tables";
+import DefaultTable, { Table, getCell } from "react-dinamic-tables";
 import type {
   TableProps,
   TableOptions,
@@ -13,6 +13,10 @@ import type {
 // Table debe ser usable como componente con sus props públicas.
 const _component: typeof Table = Table;
 void _component;
+
+// El default export documentado en el README debe resolver desde el .d.ts.
+const _default: typeof Table = DefaultTable;
+void _default;
 
 const headers: Header[] = [
   { attributeName: "name", displayText: "Nombre" },

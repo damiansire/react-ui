@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import Table from "./Table";
+// El barrel público: named + default deben resolver al mismo componente.
+import DefaultTable, { Table as NamedTable } from "../../index";
 import { Header } from "./interfaces/Header";
 import { Row } from "./interfaces/Row";
 
@@ -13,6 +15,20 @@ const rows: Row[] = [
   { id: "1", name: "Alice", amount: "10" },
   { id: "2", name: "Bob", amount: "20" },
 ];
+
+describe("Table - barrel público (default + named export)", () => {
+  it("expone un default export que renderiza (README: import Table from ...)", () => {
+    expect(DefaultTable).toBeDefined();
+    render(<DefaultTable headers={headers} rows={rows} />);
+    expect(
+      screen.getByRole("columnheader", { name: "Nombre" })
+    ).toBeInTheDocument();
+  });
+
+  it("el default export es el mismo componente que el named export", () => {
+    expect(DefaultTable).toBe(NamedTable);
+  });
+});
 
 describe("Table - render", () => {
   it("renderiza los encabezados con su displayText", () => {

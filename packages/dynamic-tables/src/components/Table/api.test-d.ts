@@ -1,6 +1,7 @@
 import { describe, it, expectTypeOf } from "vitest";
 import type { ComponentType } from "react";
 // Importamos desde el barrel público del paquete (mismo punto de entrada que el consumidor).
+import DefaultTable from "../../index";
 import { Table, getCell } from "../../index";
 import type {
   TableProps,
@@ -12,6 +13,12 @@ import type {
 describe("API público: tipos", () => {
   it("Table es un componente React que acepta TableProps", () => {
     expectTypeOf(Table).toMatchTypeOf<ComponentType<TableProps>>();
+  });
+
+  it("el paquete expone un default export equivalente al named Table", () => {
+    // El README documenta `import Table from "react-dinamic-tables"`.
+    expectTypeOf(DefaultTable).toMatchTypeOf<ComponentType<TableProps>>();
+    expectTypeOf(DefaultTable).toEqualTypeOf<typeof Table>();
   });
 
   it("TableProps tiene headers/rows/options opcionales y bien tipados", () => {
