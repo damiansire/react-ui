@@ -25,7 +25,6 @@ export const useTableSelection = (
   tableRef: React.RefObject<HTMLTableElement>
 ): [
   SelectedCell,
-  (event: KeyboardEvent) => void,
   (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void
 ] => {
   const [selectedCell, setSelectedCell] = useState<SelectedCell>({
@@ -118,5 +117,5 @@ export const useTableSelection = (
     []
   );
 
-  return [selectedCell, handleKey, handleBodyTrClick];
+  return [selectedCell, handleBodyTrClick];
 };

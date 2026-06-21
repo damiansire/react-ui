@@ -11,7 +11,11 @@ interface NewCell {
 }
 
 const Cell = ({ value, isSelected, columnName }: ICell) => (
-  <td className={isSelected ? "selected" : ""} column-id={columnName}>
+  <td
+    className={isSelected ? "selected" : ""}
+    column-id={columnName}
+    tabIndex={-1}
+  >
     {value}
   </td>
 );
@@ -56,7 +60,7 @@ const TableComponent = ({
 
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const [selectedCell, handleKey, handleBodyTrClick] = useTableSelection(
+  const [selectedCell, handleBodyTrClick] = useTableSelection(
     rows,
     rendersHeaders,
     tableRef
