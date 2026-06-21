@@ -16,5 +16,5 @@ export interface ICell {
 
 export interface TableOptions {
     noRowsText?: string;
-    HeadersAutoFill?: string;
+    HeadersAutoFill?: boolean;
 }
