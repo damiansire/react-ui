@@ -163,7 +163,7 @@ const TableComponent = ({
   };
 
   return (
-    <table ref={tableRef} tabIndex={0}>
+    <table ref={tableRef} tabIndex={0} className="table">
       <thead>
         <tr>
           {rendersHeaders.length > 0 ? (
