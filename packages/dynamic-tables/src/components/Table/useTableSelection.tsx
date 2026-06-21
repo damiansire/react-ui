@@ -100,12 +100,14 @@ export const useTableSelection = (
   );
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKey);
+    const tableNode = tableRef.current;
+    if (!tableNode) return;
 
+    tableNode.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener("keydown", handleKey);
+      tableNode.removeEventListener("keydown", handleKey);
     };
-  }, [handleKey]);
+  }, [handleKey, tableRef]);
 
   const handleBodyTrClick = useCallback(
     (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
