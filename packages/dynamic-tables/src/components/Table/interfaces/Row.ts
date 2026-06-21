@@ -1,4 +1,4 @@
 export interface Row {
   id: string;
-  [key: string]: string;
+  [key: string]: string | number;
 }
