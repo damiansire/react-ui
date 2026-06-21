@@ -80,12 +80,23 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       (forwardedRef as React.RefObject<HTMLTableElement>) ?? internalRef;
     const editInputRef = useRef<HTMLInputElement>(null);
 
-    const [selectedCell, handleBodyTrClick] = useTableSelection(
-      rows,
-      rendersHeaders,
-      tableRef,
-      Boolean(editing)
-    );
+    const [selectedCell, handleBodyTrClick, setSelectedCell] =
+      useTableSelection(rows, rendersHeaders, tableRef, Boolean(editing));
+
+    // Permite iniciar la navegación con teclado: al enfocar la tabla sin
+    // selección previa, seleccionar la primera celda [0,0] (patrón APG Data Grid).
+    // Antes, las flechas no hacían nada hasta clickear con el mouse.
+    const handleTableFocus = useCallback(() => {
+      if (selectedCell.trId !== null) return;
+      const firstRow = rows[0];
+      const firstColumn = rendersHeaders[0];
+      if (firstRow && firstColumn) {
+        setSelectedCell({
+          trId: firstRow.id,
+          columnId: firstColumn.attributeName,
+        });
+      }
+    }, [selectedCell.trId, rows, rendersHeaders, setSelectedCell]);
 
     const isSelectedCell = useCallback(
       (cellId: string, expenseId: string) => {
@@ -279,6 +290,7 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           role="grid"
           aria-label={options.label ?? "Tabla de datos"}
           className="table"
+          onFocus={handleTableFocus}
         >
           <thead>
             <tr role="row">
