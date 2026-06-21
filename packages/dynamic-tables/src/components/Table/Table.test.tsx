@@ -94,6 +94,40 @@ describe("Table - interacción", () => {
     expect(firstCell).not.toHaveClass("selected");
   });
 
+  it("selecciona [0,0] al enfocar la tabla con teclado (sin click previo)", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    // Sin selección inicial.
+    expect(
+      container.querySelector("td.selected")
+    ).not.toBeInTheDocument();
+
+    // El usuario de teclado tabula hasta la tabla: debe quedar [0,0] seleccionada.
+    fireEvent.focus(table);
+
+    const firstCell = screen
+      .getByText("Alice")
+      .closest("td") as HTMLTableCellElement;
+    expect(firstCell).toHaveClass("selected");
+  });
+
+  it("permite navegar con flechas iniciando solo con teclado (focus + ArrowDown)", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    // Sin ningún click: foco por teclado y luego flecha.
+    fireEvent.focus(table);
+    fireEvent.keyDown(table, { key: "ArrowDown" });
+
+    const secondRowCell = within(
+      screen.getByText("Bob").closest("tr") as HTMLTableRowElement
+    )
+      .getByText("Bob")
+      .closest("td") as HTMLTableCellElement;
+    expect(secondRowCell).toHaveClass("selected");
+  });
+
   it("ignora teclas de control (no abre el editor con Escape)", () => {
     const { container } = render(<Table headers={headers} rows={rows} />);
     const table = container.querySelector("table") as HTMLTableElement;
