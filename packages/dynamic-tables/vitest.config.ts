@@ -10,5 +10,10 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     css: false,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    typecheck: {
+      // Type-tests del API público (expectTypeOf / @ts-expect-error).
+      include: ["src/**/*.test-d.ts"],
+      tsconfig: "./tsconfig.json",
+    },
   },
 });
