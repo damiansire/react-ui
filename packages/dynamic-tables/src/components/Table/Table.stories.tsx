@@ -7,6 +7,14 @@ import Table from "./Table";
 export default {
   title: "Table",
   component: Table,
+  parameters: {
+    // Addon @storybook/addon-a11y: corre axe-core sobre la tabla renderizada.
+    a11y: {
+      config: {
+        rules: [{ id: "color-contrast", enabled: true }],
+      },
+    },
+  },
 } as Meta;
 
 const Template: StoryFn = (args) => <Table {...args} />;

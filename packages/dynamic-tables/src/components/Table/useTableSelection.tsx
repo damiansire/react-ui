@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Header } from "./interfaces/Header";
 import { Row } from "./interfaces/Row";
 import { getCell, getWrappedIndex } from "./libs/tableHelp";
@@ -22,10 +22,12 @@ const isMovementKey = (keyEvent: string): keyEvent is MovementKey => {
 export const useTableSelection = (
   rows: Row[],
   headers: Header[],
-  tableRef: React.RefObject<HTMLTableElement>
+  tableRef: React.RefObject<HTMLTableElement>,
+  isEditing = false
 ): [
   SelectedCell,
-  (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void
+  (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void,
+  React.Dispatch<React.SetStateAction<SelectedCell>>
 ] => {
   const [selectedCell, setSelectedCell] = useState<SelectedCell>({
     trId: null,
@@ -49,10 +51,8 @@ export const useTableSelection = (
 
       if (eventKey === MovementKey.ArrowUp) {
         nextRowIndex = getWrappedIndex(currentRowIndex, -1, rowCount);
-        window.scrollBy(0, -50);
       } else if (eventKey === MovementKey.ArrowDown) {
         nextRowIndex = getWrappedIndex(currentRowIndex, 1, rowCount);
-        window.scrollBy(0, 50);
       } else if (eventKey === MovementKey.ArrowLeft) {
         newColumnIndex = getWrappedIndex(columnIndex, -1, columnLength);
       } else if (eventKey === MovementKey.ArrowRight) {
@@ -68,11 +68,14 @@ export const useTableSelection = (
         nextRowIndex !== undefined ? nextRowIndex : currentRowIndex;
       return { nextRowIndex: finalIndex, columnId: columnIdFinal };
     },
-    [headers]
+    []
   );
 
   const handleKey = useCallback(
     (event: KeyboardEvent) => {
+      // No interceptar la navegación mientras se edita una celda (el input
+      // necesita las flechas para mover el caret).
+      if (isEditing) return;
       if (isMovementKey(event.key) && selectedCell.trId !== null) {
         event.preventDefault();
         const rowIndex = rows.findIndex(
@@ -94,11 +97,16 @@ export const useTableSelection = (
 
         if (nextCell) {
           nextCell.focus();
+          // Mantener la celda visible sin scrollear toda la ventana
+          // (reemplaza el `window.scrollBy` global e impredecible).
+          if (typeof nextCell.scrollIntoView === "function") {
+            nextCell.scrollIntoView({ block: "nearest", inline: "nearest" });
+          }
           setSelectedCell({ trId: nextExpense.id, columnId });
         }
       }
     },
-    [rows, selectedCell]
+    [rows, selectedCell, headers, getNextIndex, tableRef, isEditing]
   );
 
   useEffect(() => {
@@ -120,5 +128,5 @@ export const useTableSelection = (
     []
   );
 
-  return [selectedCell, handleBodyTrClick];
+  return [selectedCell, handleBodyTrClick, setSelectedCell];
 };

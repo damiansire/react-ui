@@ -78,32 +78,148 @@ describe("Table - interacción", () => {
     expect(firstCell).not.toHaveClass("selected");
   });
 
-  it("edita el contenido de una celda al tipear un carácter imprimible", () => {
+  it("ignora teclas de control (no abre el editor con Escape)", () => {
     const { container } = render(<Table headers={headers} rows={rows} />);
     const table = container.querySelector("table") as HTMLTableElement;
 
     const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
     fireEvent.click(cell);
 
-    fireEvent.keyDown(table, {
-      key: "X",
-      ctrlKey: false,
-      metaKey: false,
-      altKey: false,
-    });
+    fireEvent.keyDown(table, { key: "Escape" });
 
-    expect(screen.getByText("AliceX")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+});
+
+describe("Table - edición de celda con <input>", () => {
+  it("abre un <input> al tipear un carácter imprimible y reemplaza el valor", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Z" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.value).toBe("Z");
   });
 
-  it("ignora teclas de control para la edición", () => {
+  it("abre el editor con Enter conservando el valor actual y ubica el caret al final", () => {
     const { container } = render(<Table headers={headers} rows={rows} />);
     const table = container.querySelector("table") as HTMLTableElement;
 
     const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
     fireEvent.click(cell);
-
     fireEvent.keyDown(table, { key: "Enter" });
 
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    expect(input.value).toBe("Alice");
+    expect(input.selectionStart).toBe("Alice".length);
+  });
+
+  it("commitea el valor con Enter desde el input", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Alicia" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Alicia")).toBeInTheDocument();
+  });
+
+  it("commitea el valor al perder el foco (blur)", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Bob").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Bobby" } });
+    fireEvent.blur(input);
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Bobby")).toBeInTheDocument();
+  });
+
+  it("cancela la edición con Escape y restaura el valor original", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "descartado" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.queryByText("descartado")).not.toBeInTheDocument();
+  });
+
+  it("no navega con flechas mientras se edita (las flechas son para el caret)", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    // El editor sigue abierto: la flecha no movió la selección.
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+});
+
+describe("Table - accesibilidad (grid semantics)", () => {
+  it("expone role=grid en la tabla con aria-label", () => {
+    render(<Table headers={headers} rows={rows} options={{ label: "Gastos" }} />);
+    const grid = screen.getByRole("grid", { name: "Gastos" });
+    expect(grid).toBeInTheDocument();
+  });
+
+  it("expone gridcell con aria-selected reflejando la selección", () => {
+    render(<Table headers={headers} rows={rows} />);
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    expect(cell).toHaveAttribute("role", "gridcell");
+    expect(cell).toHaveAttribute("aria-selected", "false");
+
+    fireEvent.click(cell);
+    expect(cell).toHaveAttribute("aria-selected", "true");
+    // La celda seleccionada es enfocable por teclado (tabindex=0).
+    expect(cell).toHaveAttribute("tabindex", "0");
+  });
+
+  it("anuncia la celda seleccionada vía región aria-live", () => {
+    render(<Table headers={headers} rows={rows} />);
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("Sin celda seleccionada");
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    expect(status).toHaveTextContent("Celda seleccionada: name");
+  });
+
+  it("el input de edición tiene una etiqueta accesible", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    expect(screen.getByRole("textbox", { name: /editar name/i })).toBeInTheDocument();
   });
 });

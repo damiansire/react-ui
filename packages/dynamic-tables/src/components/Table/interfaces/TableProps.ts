@@ -1,3 +1,4 @@
+import React from "react";
 import { Header } from "./Header";
 import { Row } from "./Row";
 
@@ -11,10 +12,18 @@ export interface ICell {
     value: string | number;
     columnName: string;
     isSelected: boolean;
+    isEditing?: boolean;
+    draftValue?: string;
+    onDraftChange?: (value: string) => void;
+    onCommit?: () => void;
+    onCancel?: () => void;
+    editInputRef?: React.RefObject<HTMLInputElement>;
 }
 
 
 export interface TableOptions {
     noRowsText?: string;
     HeadersAutoFill?: boolean;
+    /** Etiqueta accesible de la tabla (`aria-label`). */
+    label?: string;
 }
