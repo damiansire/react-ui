@@ -4,11 +4,7 @@ import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
 import { Header } from "./interfaces/Header";
 import { ICell, TableProps, TableOptions } from "./interfaces/TableProps";
-
-interface NewCell {
-  trId: string;
-  columnId: string;
-}
+import { getHeadersFromRows, isWritableCharacter } from "./libs/tableHelp";
 
 const Cell = ({ value, isSelected, columnName }: ICell) => (
   <td
@@ -19,28 +15,6 @@ const Cell = ({ value, isSelected, columnName }: ICell) => (
     {value}
   </td>
 );
-
-const getHeadersFromRows = (rows: Row[]): Header[] => {
-  const headersSet = rows.reduce((accumulator, currentValue) => {
-    Object.keys(currentValue).forEach((key) => {
-      accumulator.add(key);
-    });
-    return accumulator;
-  }, new Set<string>());
-
-  // Excluir campos internos no mostrables (p. ej. la clave 'id').
-  headersSet.delete("id");
-
-  const headersArray = Array.from(headersSet);
-
-  // Mapear el array de claves en un array de objetos Header
-  const headerObjects: Header[] = headersArray.map((attributeName) => ({
-    attributeName,
-    displayText: attributeName, // Puedes establecer el valor predeterminado
-  }));
-
-  return headerObjects;
-};
 
 const TableComponent = ({
   rows = [],
@@ -101,17 +75,6 @@ const TableComponent = ({
     },
     [isSelectedCell, handleBodyTrClick, editedCellValues]
   );
-
-  const isWritableCharacter = (event: KeyboardEvent) => {
-    // Acepta cualquier carácter imprimible (incluido el espacio y Unicode);
-    // descarta teclas de control y combinaciones con modificadores.
-    return (
-      event.key.length === 1 &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    );
-  };
 
   //Handle edit
   useEffect(() => {
