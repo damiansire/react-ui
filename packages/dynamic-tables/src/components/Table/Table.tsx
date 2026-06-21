@@ -10,7 +10,7 @@ import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
 import { Header } from "./interfaces/Header";
 import { ICell, TableProps } from "./interfaces/TableProps";
-import { getHeadersFromRows, isWritableCharacter } from "./libs/tableHelp";
+import { getCell, getHeadersFromRows, isWritableCharacter } from "./libs/tableHelp";
 
 const Cell = ({
   value,
@@ -184,7 +184,6 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
             role="row"
             row-id={row.id}
             onClick={handleBodyTrClick}
-            className={isSelectedCell("", row.id) ? "selected" : ""}
           >
             {rowHeaders.map((data) => {
               const cellValue = getCommittedValue(row.id, data.attributeName);
@@ -256,9 +255,12 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     // Devolver el foco a la celda tras cerrar el editor.
     useEffect(() => {
       if (!editing && selectedCell.trId && selectedCell.columnId) {
-        const tableNode = tableRef.current;
-        const cell = tableNode?.querySelector<HTMLTableCellElement>(
-          `tr[row-id="${selectedCell.trId}"] td[column-id="${selectedCell.columnId}"]`
+        // Reusar getCell (escapa con CSS.escape) en vez de duplicar el selector
+        // crudo, que reintroducía la inyección que getCell ya resuelve.
+        const cell = getCell(
+          tableRef,
+          selectedCell.trId,
+          selectedCell.columnId
         );
         // Solo reenfocar si el foco quedó fuera de una celda (p. ej. tras commit del input).
         if (cell && document.activeElement?.tagName === "INPUT") {
