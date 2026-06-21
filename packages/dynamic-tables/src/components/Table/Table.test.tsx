@@ -128,6 +128,43 @@ describe("Table - interacción", () => {
     expect(secondRowCell).toHaveClass("selected");
   });
 
+  it("ArrowUp desde la primera fila hace wraparound a la última", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const firstCell = screen
+      .getByText("Alice")
+      .closest("td") as HTMLTableCellElement;
+    fireEvent.click(firstCell);
+    fireEvent.keyDown(table, { key: "ArrowUp" });
+
+    const lastRowCell = within(
+      screen.getByText("Bob").closest("tr") as HTMLTableRowElement
+    )
+      .getByText("Bob")
+      .closest("td") as HTMLTableCellElement;
+    expect(lastRowCell).toHaveClass("selected");
+  });
+
+  it("ArrowRight mueve la selección a la columna siguiente en la misma fila", () => {
+    const { container } = render(<Table headers={headers} rows={rows} />);
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const nameCell = screen
+      .getByText("Alice")
+      .closest("td") as HTMLTableCellElement;
+    fireEvent.click(nameCell);
+    fireEvent.keyDown(table, { key: "ArrowRight" });
+
+    const amountCell = within(
+      screen.getByText("Alice").closest("tr") as HTMLTableRowElement
+    )
+      .getByText("10")
+      .closest("td") as HTMLTableCellElement;
+    expect(amountCell).toHaveClass("selected");
+    expect(nameCell).not.toHaveClass("selected");
+  });
+
   it("ignora teclas de control (no abre el editor con Escape)", () => {
     const { container } = render(<Table headers={headers} rows={rows} />);
     const table = container.querySelector("table") as HTMLTableElement;
