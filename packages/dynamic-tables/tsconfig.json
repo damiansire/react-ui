@@ -12,14 +12,19 @@
     "rootDir": "src",
     "skipLibCheck": true,
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "target": "es2016"
   },
   "include": ["src"],
   "exclude": [
     "node_modules",
     "dist",
+    "src/__fixtures__",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
+    "src/**/*.test-d.ts",
     "src/**/*.stories.tsx"
   ]
 }
