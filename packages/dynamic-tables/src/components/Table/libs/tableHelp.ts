@@ -3,7 +3,9 @@ export const getCell = (
   rowId: string,
   columnId: string
 ): HTMLTableCellElement | null => {
+  const escapedRowId = CSS.escape(rowId);
+  const escapedColumnId = CSS.escape(columnId);
   return tableRef.current?.querySelector(
-    `tr[row-id="${rowId}"] td[column-id="${columnId}"]`
+    `tr[row-id="${escapedRowId}"] td[column-id="${escapedColumnId}"]`
   ) as HTMLTableCellElement | null;
 };
