@@ -197,6 +197,8 @@ In this example, we have enabled automatic header generation with the `HeadersAu
   - `noRowsText` (`string`): custom message shown when there are no rows.
   - `HeadersAutoFill` (`boolean`): when `true` and `headers` is empty, the column
     headers are generated automatically from the keys of the row data.
+  - `onCellEdit` (`(rowId, columnId, value) => void`): called when a cell edit is
+    committed. This is how you read back what the user edited.
 
 ### getCell
 

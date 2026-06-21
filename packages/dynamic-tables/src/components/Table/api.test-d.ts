@@ -49,6 +49,9 @@ describe("API público: tipos", () => {
       boolean | undefined
     >();
     expectTypeOf<TableOptions["label"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<TableOptions["onCellEdit"]>().toEqualTypeOf<
+      ((rowId: string, columnId: string, value: string) => void) | undefined
+    >();
   });
 
   it("getCell devuelve HTMLTableCellElement | null", () => {

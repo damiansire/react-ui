@@ -26,4 +26,10 @@ export interface TableOptions {
     HeadersAutoFill?: boolean;
     /** Etiqueta accesible de la tabla (`aria-label`). */
     label?: string;
+    /**
+     * Se invoca cuando el usuario confirma (commit) la edición de una celda.
+     * Es la única forma de leer hacia afuera lo que se editó: sin esto la
+     * edición es write-only (el estado vive interno en el componente).
+     */
+    onCellEdit?: (rowId: string, columnId: string, value: string) => void;
 }
