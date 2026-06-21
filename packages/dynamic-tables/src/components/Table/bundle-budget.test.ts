@@ -10,10 +10,11 @@ const pkgRoot = resolve(__dirname, "../../..");
 const esmEntry = resolve(pkgRoot, "dist/esm/index.js");
 const cjsEntry = resolve(pkgRoot, "dist/cjs/index.js");
 
-// Presupuesto de bundle (gzip) por entry. La librería empaqueta su CSS, por eso
-// el tamaño base ronda los ~31 KB; el tope da margen para cambios menores y
-// FALLA si una dependencia o feature infla el paquete sin querer.
-const GZIP_BUDGET_BYTES = 40 * 1024;
+// Presupuesto de bundle (gzip) por entry. React/react-dom quedan `external`
+// (peerDependencies), así que NO se empaquetan; el bundle es solo el código del
+// componente + su CSS (~4.5 KB gzip). El tope da margen para cambios menores y
+// FALLA si una dependencia (p. ej. React inlineado por error) infla el paquete.
+const GZIP_BUDGET_BYTES = 10 * 1024;
 
 const gzipSizeOf = (file: string): number =>
   gzipSync(readFileSync(file)).length;
