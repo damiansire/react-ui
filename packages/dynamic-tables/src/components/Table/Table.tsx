@@ -137,9 +137,12 @@ const TableComponent = ({
       }
     }
 
-    window.addEventListener("keydown", pressKey);
+    const tableNode = tableRef.current;
+    if (!tableNode) return;
+
+    tableNode.addEventListener("keydown", pressKey);
     return () => {
-      window.removeEventListener("keydown", pressKey);
+      tableNode.removeEventListener("keydown", pressKey);
     };
   }, [selectedCell, editedCellValues, rows]);
 
@@ -160,7 +163,7 @@ const TableComponent = ({
   };
 
   return (
-    <table ref={tableRef}>
+    <table ref={tableRef} tabIndex={0}>
       <thead>
         <tr>
           {rendersHeaders.length > 0 ? (
