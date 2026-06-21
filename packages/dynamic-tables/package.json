@@ -6,7 +6,9 @@
     "rollup-build-lib": "rollup -c",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit",
+    "test:types": "vitest run --typecheck",
+    "test": "vitest run --typecheck"
   },
   "repository": {
     "type": "git",
