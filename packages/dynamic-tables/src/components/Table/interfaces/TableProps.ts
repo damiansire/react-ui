@@ -8,7 +8,7 @@ export interface TableProps {
 }
 
 export interface ICell {
-    value: string;
+    value: string | number;
     columnName: string;
     isSelected: boolean;
 }

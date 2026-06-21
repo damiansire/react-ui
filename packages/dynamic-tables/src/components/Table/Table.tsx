@@ -29,7 +29,7 @@ const TableComponent = ({
   }
   // State para manejar el contenido editado de la celda
   const [editedCellValues, setEditedCellValues] = useState<{
-    [rowId: string]: { [columnId: string]: string };
+    [rowId: string]: { [columnId: string]: string | number };
   }>({});
 
   const tableRef = useRef<HTMLTableElement>(null);
@@ -90,7 +90,8 @@ const TableComponent = ({
           // Valor base: el ya editado si existe, sino el del dataset original
           const baseRow = lastCellValues[trId] ?? currentRow;
           const currentValue = baseRow ? baseRow[columnId] ?? "" : "";
-          const newRowValue = currentValue + key;
+          // La edicion es solo texto: normalizamos a string en un unico punto.
+          const newRowValue = String(currentValue) + key;
 
           // Copia inmutable de cada nivel tocado (no muta el estado previo)
           return {
