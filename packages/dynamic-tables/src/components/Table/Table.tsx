@@ -24,6 +24,9 @@ const getHeadersFromRows = (rows: Row[]): Header[] => {
     return accumulator;
   }, new Set<string>());
 
+  // Excluir campos internos no mostrables (p. ej. la clave 'id').
+  headersSet.delete("id");
+
   const headersArray = Array.from(headersSet);
 
   // Mapear el array de claves en un array de objetos Header
@@ -55,7 +58,7 @@ const TableComponent = ({
 
   const [selectedCell, handleKey, handleBodyTrClick] = useTableSelection(
     rows,
-    headers,
+    rendersHeaders,
     tableRef
   );
 
