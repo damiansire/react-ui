@@ -1,0 +1,20 @@
+# Dependencias
+node_modules/
+
+# Builds / artefactos
+dist/
+build/
+storybook-static/
+.turbo/
+
+# Empaquetado npm
+*.tgz
+
+# Tests / cobertura
+coverage/
+
+# Logs
+*.log
+
+# Sistema operativo
+.DS_Store
