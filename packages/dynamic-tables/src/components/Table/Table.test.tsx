@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import Table from "./Table";
 // El barrel público: named + default deben resolver al mismo componente.
@@ -197,6 +197,63 @@ describe("Table - edición de celda con <input>", () => {
 
     // El editor sigue abierto: la flecha no movió la selección.
     expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+});
+
+describe("Table - lectura de la edición (onCellEdit)", () => {
+  it("invoca onCellEdit con (rowId, columnId, valor) al commitear", () => {
+    const onCellEdit = vi.fn();
+    const { container } = render(
+      <Table headers={headers} rows={rows} options={{ onCellEdit }} />
+    );
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Alicia" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onCellEdit).toHaveBeenCalledTimes(1);
+    expect(onCellEdit).toHaveBeenCalledWith("1", "name", "Alicia");
+  });
+
+  it("no invoca onCellEdit si se cancela con Escape", () => {
+    const onCellEdit = vi.fn();
+    const { container } = render(
+      <Table headers={headers} rows={rows} options={{ onCellEdit }} />
+    );
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Enter" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "descartado" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    expect(onCellEdit).not.toHaveBeenCalled();
+  });
+
+  it("Backspace abre el editor vaciando la celda (permite borrar)", () => {
+    const onCellEdit = vi.fn();
+    const { container } = render(
+      <Table headers={headers} rows={rows} options={{ onCellEdit }} />
+    );
+    const table = container.querySelector("table") as HTMLTableElement;
+
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    fireEvent.keyDown(table, { key: "Backspace" });
+
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    expect(input.value).toBe("");
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onCellEdit).toHaveBeenCalledWith("1", "name", "");
   });
 });
 

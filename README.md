@@ -74,13 +74,16 @@ import Table from "react-dinamic-tables";
 | `noRowsText` | `string` | Mensaje cuando no hay filas (por defecto `"No data"`). |
 | `HeadersAutoFill` | `boolean` | Si es `true` y `headers` está vacío, genera las columnas automáticamente a partir de las claves de las filas. |
 | `label` | `string` | Etiqueta accesible de la tabla (`aria-label`). |
+| `onCellEdit` | `(rowId, columnId, value) => void` | Se invoca al confirmar la edición de una celda. Es la forma de leer hacia afuera lo que el usuario editó. |
 
 ### Interacción por teclado
 
 - Clic en una fila o navegación enfoca y selecciona la celda.
 - Empezar a tipear un carácter imprimible abre el editor reemplazando el valor.
 - `Enter` sobre la celda seleccionada abre el editor con el valor actual.
+- `Backspace` / `Delete` abren el editor vaciando la celda (para borrar).
 - `Enter` confirma la edición; `Escape` la cancela.
+- Para leer lo editado, pasá `options.onCellEdit(rowId, columnId, value)`.
 
 ### Generar columnas automáticamente
 

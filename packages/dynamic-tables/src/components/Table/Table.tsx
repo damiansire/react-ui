@@ -120,6 +120,7 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       [getCommittedValue]
     );
 
+    const onCellEdit = options.onCellEdit;
     const commitEdit = useCallback(() => {
       setEditing((current) => {
         if (!current) return null;
@@ -131,9 +132,11 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
             [columnId]: draftValue,
           },
         }));
+        // Notificar hacia afuera el valor confirmado (lectura del consumidor).
+        onCellEdit?.(trId, columnId, draftValue);
         return null;
       });
-    }, [draftValue]);
+    }, [draftValue, onCellEdit]);
 
     const cancelEdit = useCallback(() => {
       setEditing(null);
@@ -202,6 +205,14 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           event.preventDefault();
           // El primer carácter tipeado reemplaza el contenido (modo "edición rápida").
           startEditing(trId, columnId, event.key);
+        } else if (
+          (event.key === "Backspace" || event.key === "Delete") &&
+          trId &&
+          columnId
+        ) {
+          // Backspace/Delete abren el editor vaciando la celda (permite corregir).
+          event.preventDefault();
+          startEditing(trId, columnId, "");
         } else if (event.key === "Enter" && trId && columnId) {
           // Enter sobre la celda seleccionada abre el editor con el valor actual.
           event.preventDefault();
