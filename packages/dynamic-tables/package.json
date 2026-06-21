@@ -1,7 +1,16 @@
 {
   "name": "react-dinamic-tables",
   "version": "0.0.2",
-  "description": "React package for creating dynamic and interactive tables in web applications.",
+  "description": "Componente React de tablas dinámicas e interactivas, con selección y edición de celdas mediante teclado.",
+  "keywords": [
+    "react",
+    "table",
+    "datagrid",
+    "dynamic-tables",
+    "component",
+    "cell-editing",
+    "typescript"
+  ],
   "scripts": {
     "rollup-build-lib": "rollup -c",
     "storybook": "storybook dev -p 6006",
@@ -15,7 +24,7 @@
     "url": "git+https://github.com/damiansire/react-ui.git",
     "directory": "packages/dynamic-tables"
   },
-  "author": "",
+  "author": "Damian Sire <damiansire@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/damiansire/react-ui/issues"
