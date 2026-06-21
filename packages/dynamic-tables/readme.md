@@ -7,9 +7,9 @@ The Table Component is a React component that allows you to display data in a ta
 To use the Table Component in your React project, you can install it via npm or yarn:
 
 ```bash
-npm install table-component
+npm install react-dinamic-tables
 # or
-yarn add table-component
+yarn add react-dinamic-tables
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ To use the Table Component in your React application, you can import it and incl
 
 ```jsx
 import React from "react";
-import TableComponent from "table-component";
+import TableComponent from "react-dinamic-tables";
 
 function App() {
   const headers = [
@@ -61,7 +61,7 @@ export default App;
 
 ```jsx
 import React from "react";
-import TableComponent from "table-component";
+import TableComponent from "react-dinamic-tables";
 
 function App() {
   const headers = [
@@ -89,7 +89,7 @@ In this example, the table is empty, and no custom message is displayed. Use the
 
 ```jsx
 import React from "react";
-import TableComponent from "table-component";
+import TableComponent from "react-dinamic-tables";
 
 function App() {
   const headers = [
@@ -122,7 +122,7 @@ In this example, we have defined a custom message in the `noRowsText` option. Wh
 
 ```jsx
 import React from "react";
-import TableComponent from "table-component";
+import TableComponent from "react-dinamic-tables";
 
 function App() {
   const headers = []; // Empty array, no headers
@@ -154,7 +154,7 @@ In this example, we provided an empty array for `headers`, resulting in a table 
 
 ```jsx
 import React from "react";
-import TableComponent from "table-component";
+import TableComponent from "react-dinamic-tables";
 
 function App() {
   const headers = []; // Empty array
@@ -193,13 +193,17 @@ In this example, we have enabled automatic header generation with the `HeadersAu
 
 - `headers`: An array of header objects that define the column headers of the table.
 - `rows`: An array of data objects, each representing a row in the table.
+- `options`: Optional configuration object:
+  - `noRowsText` (`string`): custom message shown when there are no rows.
+  - `HeadersAutoFill` (`boolean`): when `true` and `headers` is empty, the column
+    headers are generated automatically from the keys of the row data.
 
 ### getCell
 
 A utility function that can be used to retrieve a specific cell within the table.
 
 ```jsx
-import { getCell } from "table-component";
+import { getCell } from "react-dinamic-tables";
 
 const tableRef = React.createRef();
 const cell = getCell(tableRef, "rowId", "columnId");
