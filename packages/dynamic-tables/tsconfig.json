@@ -9,8 +9,17 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "outDir": "dist",
+    "rootDir": "src",
     "skipLibCheck": true,
     "strict": true,
     "target": "es2016"
-  }
+  },
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.stories.tsx"
+  ]
 }
