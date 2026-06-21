@@ -1,6 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 
-// jsdom no implementa window.scrollBy; el componente lo invoca en la
-// navegacion por flechas. Lo neutralizamos para no ensuciar la salida de
-// los tests (el reemplazo opt-in del side-effect es trabajo de Fase 3).
-window.scrollBy = () => {};
+// La navegación por flechas usa `element.scrollIntoView` (reemplaza al antiguo
+// `window.scrollBy` global e impredecible). jsdom no lo implementa; el
+// componente lo invoca de forma defensiva (guarda con typeof), pero stubeamos
+// igual para cubrir entornos que sí lo definan parcialmente.
+if (typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = () => {};
+}

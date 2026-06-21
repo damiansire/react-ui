@@ -1,149 +1,303 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  forwardRef,
+} from "react";
 import "./table.css";
 import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
 import { Header } from "./interfaces/Header";
-import { ICell, TableProps, TableOptions } from "./interfaces/TableProps";
+import { ICell, TableProps } from "./interfaces/TableProps";
 import { getHeadersFromRows, isWritableCharacter } from "./libs/tableHelp";
 
-const Cell = ({ value, isSelected, columnName }: ICell) => (
+const Cell = ({
+  value,
+  isSelected,
+  columnName,
+  isEditing,
+  draftValue,
+  onDraftChange,
+  onCommit,
+  onCancel,
+  editInputRef,
+}: ICell) => (
   <td
+    role="gridcell"
     className={isSelected ? "selected" : ""}
     column-id={columnName}
-    tabIndex={-1}
+    tabIndex={isSelected ? 0 : -1}
+    aria-selected={isSelected}
   >
-    {value}
+    {isEditing ? (
+      <input
+        ref={editInputRef}
+        className="cell-editor"
+        aria-label={`Editar ${columnName}`}
+        value={draftValue}
+        onChange={(event) => onDraftChange?.(event.target.value)}
+        onBlur={() => onCommit?.()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onCommit?.();
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            onCancel?.();
+          }
+        }}
+      />
+    ) : (
+      value
+    )}
   </td>
 );
 
-const TableComponent = ({
-  rows = [],
-  headers = [],
-  options = {},
-}: TableProps) => {
-  const noRowsText = options.noRowsText ? options.noRowsText : "No data";
+const TableComponent = forwardRef<HTMLTableElement, TableProps>(
+  ({ rows = [], headers = [], options = {} }, forwardedRef) => {
+    const noRowsText = options.noRowsText ? options.noRowsText : "No data";
 
-  let rendersHeaders: Header[] = headers;
-  if (rendersHeaders.length === 0 && options.HeadersAutoFill) {
-    rendersHeaders = getHeadersFromRows(rows);
-  }
-  // State para manejar el contenido editado de la celda
-  const [editedCellValues, setEditedCellValues] = useState<{
-    [rowId: string]: { [columnId: string]: string | number };
-  }>({});
-
-  const tableRef = useRef<HTMLTableElement>(null);
-
-  const [selectedCell, handleBodyTrClick] = useTableSelection(
-    rows,
-    rendersHeaders,
-    tableRef
-  );
-
-  const isSelectedCell = useCallback(
-    (cellId: string, expenseId: string) => {
-      return selectedCell.trId === expenseId && selectedCell.columnId === cellId;
-    },
-    [selectedCell]
-  );
-
-  const renderRow = useCallback(
-    (row: Row, rowHeaders: Header[]) => {
-      return (
-        <tr
-          key={row.id}
-          row-id={row.id}
-          onClick={handleBodyTrClick}
-          className={isSelectedCell("", row.id) ? "selected" : ""}
-        >
-          {rowHeaders.map((data) => {
-            let cellValue = row[data.attributeName];
-            if (editedCellValues[row.id]) {
-              cellValue = editedCellValues[row.id][data.attributeName];
-            }
-            return (
-              <Cell
-                key={data.attributeName}
-                value={cellValue}
-                columnName={data.attributeName}
-                isSelected={isSelectedCell(data.attributeName, row.id)}
-              />
-            );
-          })}
-        </tr>
-      );
-    },
-    [isSelectedCell, handleBodyTrClick, editedCellValues]
-  );
-
-  //Handle edit
-  useEffect(() => {
-    function pressKey(event: KeyboardEvent) {
-      const { key } = event;
-      const trId = selectedCell.trId;
-      const columnId = selectedCell.columnId;
-      if (isWritableCharacter(event) && trId && columnId) {
-        setEditedCellValues((lastCellValues) => {
-          // Obtiene la fila actual del dataset original
-          const currentRow = rows.find((x) => x.id === trId);
-
-          // Valor base: el ya editado si existe, sino el del dataset original
-          const baseRow = lastCellValues[trId] ?? currentRow;
-          const currentValue = baseRow ? baseRow[columnId] ?? "" : "";
-          // La edicion es solo texto: normalizamos a string en un unico punto.
-          const newRowValue = String(currentValue) + key;
-
-          // Copia inmutable de cada nivel tocado (no muta el estado previo)
-          return {
-            ...lastCellValues,
-            [trId]: {
-              ...(lastCellValues[trId] ?? currentRow),
-              [columnId]: newRowValue,
-            },
-          };
-        });
-      }
+    let rendersHeaders: Header[] = headers;
+    if (rendersHeaders.length === 0 && options.HeadersAutoFill) {
+      rendersHeaders = getHeadersFromRows(rows);
     }
 
-    const tableNode = tableRef.current;
-    if (!tableNode) return;
+    // Valores ya comprometidos (commit) por celda.
+    const [editedCellValues, setEditedCellValues] = useState<{
+      [rowId: string]: { [columnId: string]: string | number };
+    }>({});
 
-    tableNode.addEventListener("keydown", pressKey);
-    return () => {
-      tableNode.removeEventListener("keydown", pressKey);
+    // Celda actualmente en modo edición (input abierto) y su borrador.
+    const [editing, setEditing] = useState<{
+      trId: string;
+      columnId: string;
+    } | null>(null);
+    const [draftValue, setDraftValue] = useState<string>("");
+
+    const internalRef = useRef<HTMLTableElement>(null);
+    const tableRef =
+      (forwardedRef as React.RefObject<HTMLTableElement>) ?? internalRef;
+    const editInputRef = useRef<HTMLInputElement>(null);
+
+    const [selectedCell, handleBodyTrClick] = useTableSelection(
+      rows,
+      rendersHeaders,
+      tableRef,
+      Boolean(editing)
+    );
+
+    const isSelectedCell = useCallback(
+      (cellId: string, expenseId: string) => {
+        return (
+          selectedCell.trId === expenseId && selectedCell.columnId === cellId
+        );
+      },
+      [selectedCell]
+    );
+
+    const getCommittedValue = useCallback(
+      (trId: string, columnId: string): string | number => {
+        const editedRow = editedCellValues[trId];
+        if (editedRow && columnId in editedRow) {
+          return editedRow[columnId] ?? "";
+        }
+        const originalRow = rows.find((r) => r.id === trId);
+        return originalRow ? originalRow[columnId] ?? "" : "";
+      },
+      [editedCellValues, rows]
+    );
+
+    const startEditing = useCallback(
+      (trId: string, columnId: string, initial?: string) => {
+        const base =
+          initial !== undefined
+            ? initial
+            : String(getCommittedValue(trId, columnId));
+        setDraftValue(base);
+        setEditing({ trId, columnId });
+      },
+      [getCommittedValue]
+    );
+
+    const commitEdit = useCallback(() => {
+      setEditing((current) => {
+        if (!current) return null;
+        const { trId, columnId } = current;
+        setEditedCellValues((last) => ({
+          ...last,
+          [trId]: {
+            ...(last[trId] ?? {}),
+            [columnId]: draftValue,
+          },
+        }));
+        return null;
+      });
+    }, [draftValue]);
+
+    const cancelEdit = useCallback(() => {
+      setEditing(null);
+    }, []);
+
+    // Al entrar en edición, llevar el caret al input.
+    useEffect(() => {
+      if (editing && editInputRef.current) {
+        const input = editInputRef.current;
+        input.focus();
+        const end = input.value.length;
+        input.setSelectionRange(end, end);
+      }
+    }, [editing]);
+
+    const renderRow = useCallback(
+      (row: Row, rowHeaders: Header[]) => {
+        return (
+          <tr
+            key={row.id}
+            role="row"
+            row-id={row.id}
+            onClick={handleBodyTrClick}
+            className={isSelectedCell("", row.id) ? "selected" : ""}
+          >
+            {rowHeaders.map((data) => {
+              const cellValue = getCommittedValue(row.id, data.attributeName);
+              const cellIsEditing =
+                editing?.trId === row.id &&
+                editing?.columnId === data.attributeName;
+              return (
+                <Cell
+                  key={data.attributeName}
+                  value={cellValue}
+                  columnName={data.attributeName}
+                  isSelected={isSelectedCell(data.attributeName, row.id)}
+                  isEditing={cellIsEditing}
+                  draftValue={cellIsEditing ? draftValue : ""}
+                  onDraftChange={setDraftValue}
+                  onCommit={commitEdit}
+                  onCancel={cancelEdit}
+                  editInputRef={cellIsEditing ? editInputRef : undefined}
+                />
+              );
+            })}
+          </tr>
+        );
+      },
+      [
+        isSelectedCell,
+        handleBodyTrClick,
+        getCommittedValue,
+        editing,
+        draftValue,
+        commitEdit,
+        cancelEdit,
+      ]
+    );
+
+    // Abre la edición al tipear un carácter imprimible sobre la celda seleccionada.
+    useEffect(() => {
+      function pressKey(event: KeyboardEvent) {
+        if (editing) return;
+        const { trId, columnId } = selectedCell;
+        if (isWritableCharacter(event) && trId && columnId) {
+          event.preventDefault();
+          // El primer carácter tipeado reemplaza el contenido (modo "edición rápida").
+          startEditing(trId, columnId, event.key);
+        } else if (event.key === "Enter" && trId && columnId) {
+          // Enter sobre la celda seleccionada abre el editor con el valor actual.
+          event.preventDefault();
+          startEditing(trId, columnId);
+        }
+      }
+
+      const tableNode = tableRef.current;
+      if (!tableNode) return;
+
+      tableNode.addEventListener("keydown", pressKey);
+      return () => {
+        tableNode.removeEventListener("keydown", pressKey);
+      };
+    }, [selectedCell, editing, startEditing, tableRef]);
+
+    // Devolver el foco a la celda tras cerrar el editor.
+    useEffect(() => {
+      if (!editing && selectedCell.trId && selectedCell.columnId) {
+        const tableNode = tableRef.current;
+        const cell = tableNode?.querySelector<HTMLTableCellElement>(
+          `tr[row-id="${selectedCell.trId}"] td[column-id="${selectedCell.columnId}"]`
+        );
+        // Solo reenfocar si el foco quedó fuera de una celda (p. ej. tras commit del input).
+        if (cell && document.activeElement?.tagName === "INPUT") {
+          cell.focus();
+        }
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editing]);
+
+    const renderRows = () => {
+      return (
+        <>
+          {rows.length > 0 ? (
+            rows.map((row) => renderRow(row, rendersHeaders))
+          ) : (
+            <tr role="row">
+              <td
+                role="gridcell"
+                colSpan={rendersHeaders.length || 1}
+                className="no-data"
+              >
+                {noRowsText}
+              </td>
+            </tr>
+          )}
+        </>
+      );
     };
-  }, [selectedCell, editedCellValues, rows]);
 
-  const renderRows = () => {
+    const selectionLabel =
+      selectedCell.trId && selectedCell.columnId
+        ? `Celda seleccionada: ${selectedCell.columnId}${
+            editing ? " (editando)" : ""
+          }`
+        : "Sin celda seleccionada";
+
     return (
       <>
-        {rows.length > 0 ? (
-          rows.map((row) => renderRow(row, rendersHeaders))
-        ) : (
-          <tr>
-            <td colSpan={rendersHeaders.length || 1} className="no-data">
-              {noRowsText}
-            </td>
-          </tr>
-        )}
+        <table
+          ref={tableRef}
+          tabIndex={0}
+          role="grid"
+          aria-label={options.label ?? "Tabla de datos"}
+          className="table"
+        >
+          <thead>
+            <tr role="row">
+              {rendersHeaders.length > 0 ? (
+                rendersHeaders.map((x) => (
+                  <th key={x.attributeName} role="columnheader" scope="col">
+                    {x.displayText}
+                  </th>
+                ))
+              ) : (
+                <th role="columnheader" scope="col">
+                  No headers. Consider adding autofill option
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>{renderRows()}</tbody>
+        </table>
+        <div
+          className="table-sr-status"
+          role="status"
+          aria-live="polite"
+        >
+          {selectionLabel}
+        </div>
       </>
     );
-  };
+  }
+);
 
-  return (
-    <table ref={tableRef} tabIndex={0} className="table">
-      <thead>
-        <tr>
-          {rendersHeaders.length > 0 ? (
-            rendersHeaders.map((x) => <th key={x.attributeName}>{x.displayText}</th>)
-          ) : (
-            <th>No headers. Consider adding autofill option</th>
-          )}
-        </tr>
-      </thead>
-      <tbody>{renderRows()}</tbody>
-    </table>
-  );
-};
+TableComponent.displayName = "Table";
 
 export default TableComponent;

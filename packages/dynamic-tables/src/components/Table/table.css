@@ -20,9 +20,42 @@
 }
 
 .table td.selected {
-  border: 2px solid black;
+  /* Indicador de selección redundante (no solo color): borde + fondo + peso. */
+  border: 2px solid #1a1a1a;
+  background-color: #e8f0fe;
+  font-weight: 600;
+}
+
+/* Foco de teclado visible y consistente en celdas. */
+.table td:focus,
+.table td:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: -3px;
 }
 
 .table td.no-data {
   text-align: center;
+}
+
+.table td .cell-editor {
+  box-sizing: border-box;
+  width: 100%;
+  margin: -4px 0;
+  padding: 4px;
+  font: inherit;
+  border: 1px solid #1a73e8;
+  border-radius: 2px;
+}
+
+/* Texto solo para lectores de pantalla (status / aria-live). */
+.table-sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
