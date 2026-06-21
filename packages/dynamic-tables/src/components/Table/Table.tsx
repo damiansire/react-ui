@@ -75,9 +75,22 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     } | null>(null);
     const [draftValue, setDraftValue] = useState<string>("");
 
-    const internalRef = useRef<HTMLTableElement>(null);
-    const tableRef =
-      (forwardedRef as React.RefObject<HTMLTableElement>) ?? internalRef;
+    // El componente siempre usa `internalRef` para su lógica interna (selección,
+    // foco, getCell). El `setTableRef` mergea: setea internalRef y propaga el
+    // nodo al ref del consumidor, sea objeto o callback ref.
+    const internalRef = useRef<HTMLTableElement | null>(null);
+    const tableRef = internalRef;
+    const setTableRef = useCallback(
+      (node: HTMLTableElement | null) => {
+        internalRef.current = node;
+        if (typeof forwardedRef === "function") {
+          forwardedRef(node);
+        } else if (forwardedRef) {
+          forwardedRef.current = node;
+        }
+      },
+      [forwardedRef]
+    );
     const editInputRef = useRef<HTMLInputElement>(null);
 
     const [selectedCell, handleBodyTrClick, setSelectedCell] =
@@ -285,7 +298,7 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     return (
       <>
         <table
-          ref={tableRef}
+          ref={setTableRef}
           tabIndex={0}
           role="grid"
           aria-label={options.label ?? "Tabla de datos"}
