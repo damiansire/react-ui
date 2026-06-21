@@ -234,6 +234,39 @@ describe("Table - edición de celda con <input>", () => {
   });
 });
 
+describe("Table - forwardRef", () => {
+  it("propaga el nodo a un object ref del consumidor", () => {
+    const ref = { current: null as HTMLTableElement | null };
+    render(<Table ref={ref} headers={headers} rows={rows} />);
+    expect(ref.current).toBeInstanceOf(HTMLTableElement);
+  });
+
+  it("soporta callback refs (no rompe la lógica interna)", () => {
+    let node: HTMLTableElement | null = null;
+    const { container } = render(
+      <Table
+        ref={(el) => {
+          node = el;
+        }}
+        headers={headers}
+        rows={rows}
+      />
+    );
+    // El consumidor recibe el nodo vía callback ref.
+    expect(node).toBeInstanceOf(HTMLTableElement);
+
+    // Y la lógica interna (selección por click) sigue funcionando, lo que prueba
+    // que internalRef no quedó en undefined por el callback ref.
+    const cell = screen.getByText("Alice").closest("td") as HTMLTableCellElement;
+    fireEvent.click(cell);
+    expect(cell).toHaveClass("selected");
+
+    // getCell sobre el nodo del consumidor encuentra la celda.
+    const table = container.querySelector("table") as HTMLTableElement;
+    expect(table).toBe(node);
+  });
+});
+
 describe("Table - lectura de la edición (onCellEdit)", () => {
   it("invoca onCellEdit con (rowId, columnId, valor) al commitear", () => {
     const onCellEdit = vi.fn();
