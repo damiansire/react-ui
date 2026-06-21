@@ -15,8 +15,8 @@ enum MovementKey {
   ArrowRight = "ArrowRight",
 }
 
-const isMovementKey = (keyEvent: string) => {
-  return Object.values(MovementKey).includes(keyEvent);
+const isMovementKey = (keyEvent: string): keyEvent is MovementKey => {
+  return (Object.values(MovementKey) as string[]).includes(keyEvent);
 };
 
 export const useTableSelection = (
@@ -87,6 +87,9 @@ export const useTableSelection = (
         );
 
         const nextExpense = rows[nextRowIndex];
+        if (!nextExpense || columnId === null) {
+          return;
+        }
         const nextCell = getCell(tableRef, nextExpense.id, columnId);
 
         if (nextCell) {
