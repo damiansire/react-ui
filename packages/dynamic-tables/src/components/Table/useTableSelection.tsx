@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "./interfaces/Header";
 import { Row } from "./interfaces/Row";
-import { getCell } from "./libs/tableHelp";
+import { getCell, getWrappedIndex } from "./libs/tableHelp";
 
 interface SelectedCell {
   trId: string | null;
@@ -48,20 +48,20 @@ export const useTableSelection = (
       let nextRowIndex;
 
       if (eventKey === MovementKey.ArrowUp) {
-        nextRowIndex = (currentRowIndex - 1 + rowCount) % rowCount;
+        nextRowIndex = getWrappedIndex(currentRowIndex, -1, rowCount);
         window.scrollBy(0, -50);
       } else if (eventKey === MovementKey.ArrowDown) {
-        nextRowIndex = (currentRowIndex + 1) % rowCount;
+        nextRowIndex = getWrappedIndex(currentRowIndex, 1, rowCount);
         window.scrollBy(0, 50);
       } else if (eventKey === MovementKey.ArrowLeft) {
-        newColumnIndex = (columnIndex - 1 + columnLength) % columnLength;
+        newColumnIndex = getWrappedIndex(columnIndex, -1, columnLength);
       } else if (eventKey === MovementKey.ArrowRight) {
-        newColumnIndex = (columnIndex + 1) % columnLength;
+        newColumnIndex = getWrappedIndex(columnIndex, 1, columnLength);
       }
 
       const columnIdFinal =
         newColumnIndex !== undefined
-          ? headers[newColumnIndex].attributeName
+          ? headers[newColumnIndex]?.attributeName ?? currentColumnId
           : currentColumnId;
 
       const finalIndex =
