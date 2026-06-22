@@ -112,9 +112,9 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     }, [selectedCell.trId, rows, rendersHeaders, setSelectedCell]);
 
     const isSelectedCell = useCallback(
-      (cellId: string, expenseId: string) => {
+      (columnId: string, rowId: string) => {
         return (
-          selectedCell.trId === expenseId && selectedCell.columnId === cellId
+          selectedCell.trId === rowId && selectedCell.columnId === columnId
         );
       },
       [selectedCell]
