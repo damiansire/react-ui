@@ -79,7 +79,7 @@ export const useTableSelection = (
       if (isMovementKey(event.key) && selectedCell.trId !== null) {
         event.preventDefault();
         const rowIndex = rows.findIndex(
-          (expense) => expense.id === selectedCell.trId
+          (row) => row.id === selectedCell.trId
         );
         const { nextRowIndex, columnId } = getNextIndex(
           rowIndex,
@@ -89,11 +89,11 @@ export const useTableSelection = (
           headers
         );
 
-        const nextExpense = rows[nextRowIndex];
-        if (!nextExpense || columnId === null) {
+        const nextRow = rows[nextRowIndex];
+        if (!nextRow || columnId === null) {
           return;
         }
-        const nextCell = getCell(tableRef, nextExpense.id, columnId);
+        const nextCell = getCell(tableRef, nextRow.id, columnId);
 
         if (nextCell) {
           nextCell.focus();
@@ -102,7 +102,7 @@ export const useTableSelection = (
           if (typeof nextCell.scrollIntoView === "function") {
             nextCell.scrollIntoView({ block: "nearest", inline: "nearest" });
           }
-          setSelectedCell({ trId: nextExpense.id, columnId });
+          setSelectedCell({ trId: nextRow.id, columnId });
         }
       }
     },
