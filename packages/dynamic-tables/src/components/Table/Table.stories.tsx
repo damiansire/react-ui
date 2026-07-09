@@ -93,3 +93,14 @@ HeadersAutoFill.args = {
     HeadersAutoFill: true,
   },
 };
+
+// Click a header to cycle unsorted → ascending → descending → unsorted.
+// The `amount` column sorts numerically even though the values are strings.
+export const Sortable = Template.bind({});
+Sortable.args = {
+  headers: headers,
+  rows: data,
+  options: {
+    sortable: true,
+  },
+};

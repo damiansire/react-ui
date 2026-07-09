@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
   forwardRef,
 } from "react";
 import "./table.css";
@@ -10,7 +11,14 @@ import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
 import { Header } from "./interfaces/Header";
 import { ICell, TableProps } from "./interfaces/TableProps";
-import { getCell, getHeadersFromRows, isWritableCharacter } from "./libs/tableHelp";
+import {
+  getCell,
+  getHeadersFromRows,
+  isWritableCharacter,
+  nextSortDirection,
+  sortRows,
+  SortDirection,
+} from "./libs/tableHelp";
 
 const Cell = ({
   value,
@@ -63,6 +71,30 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       rendersHeaders = getHeadersFromRows(rows);
     }
 
+    // Orden por columna (opt-in vía options.sortable). null = orden original.
+    const [sort, setSort] = useState<{
+      columnId: string;
+      direction: SortDirection;
+    } | null>(null);
+
+    // Las filas tal como se muestran: ordenadas si hay `sort` activo, o las
+    // originales. La edición se indexa por rowId (estable), así que un reorden
+    // no pierde valores ya editados. Todo lo demás (selección, foco, teclado)
+    // opera sobre ESTAS filas para seguir el orden visible.
+    const displayedRows = useMemo(() => {
+      if (!options.sortable || !sort) return rows;
+      return sortRows(rows, sort.columnId, sort.direction);
+    }, [rows, sort, options.sortable]);
+
+    const toggleSort = useCallback((columnId: string) => {
+      setSort((current) => {
+        const currentDir =
+          current && current.columnId === columnId ? current.direction : null;
+        const next = nextSortDirection(currentDir);
+        return next === null ? null : { columnId, direction: next };
+      });
+    }, []);
+
     // Valores ya comprometidos (commit) por celda.
     const [editedCellValues, setEditedCellValues] = useState<{
       [rowId: string]: { [columnId: string]: string | number };
@@ -94,14 +126,14 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     const editInputRef = useRef<HTMLInputElement>(null);
 
     const [selectedCell, handleBodyTrClick, setSelectedCell] =
-      useTableSelection(rows, rendersHeaders, tableRef, Boolean(editing));
+      useTableSelection(displayedRows, rendersHeaders, tableRef, Boolean(editing));
 
     // Permite iniciar la navegación con teclado: al enfocar la tabla sin
     // selección previa, seleccionar la primera celda [0,0] (patrón APG Data Grid).
     // Antes, las flechas no hacían nada hasta clickear con el mouse.
     const handleTableFocus = useCallback(() => {
       if (selectedCell.trId !== null) return;
-      const firstRow = rows[0];
+      const firstRow = displayedRows[0];
       const firstColumn = rendersHeaders[0];
       if (firstRow && firstColumn) {
         setSelectedCell({
@@ -109,7 +141,7 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           columnId: firstColumn.attributeName,
         });
       }
-    }, [selectedCell.trId, rows, rendersHeaders, setSelectedCell]);
+    }, [selectedCell.trId, displayedRows, rendersHeaders, setSelectedCell]);
 
     const isSelectedCell = useCallback(
       (columnId: string, rowId: string) => {
@@ -273,8 +305,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     const renderRows = () => {
       return (
         <>
-          {rows.length > 0 ? (
-            rows.map((row) => renderRow(row, rendersHeaders))
+          {displayedRows.length > 0 ? (
+            displayedRows.map((row) => renderRow(row, rendersHeaders))
           ) : (
             <tr role="row">
               <td
@@ -310,11 +342,39 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           <thead>
             <tr role="row">
               {rendersHeaders.length > 0 ? (
-                rendersHeaders.map((x) => (
-                  <th key={x.attributeName} role="columnheader" scope="col">
-                    {x.displayText}
-                  </th>
-                ))
+                rendersHeaders.map((x) => {
+                  if (!options.sortable) {
+                    return (
+                      <th key={x.attributeName} role="columnheader" scope="col">
+                        {x.displayText}
+                      </th>
+                    );
+                  }
+                  const active = sort?.columnId === x.attributeName;
+                  const ariaSort = !active
+                    ? "none"
+                    : sort?.direction === "asc"
+                      ? "ascending"
+                      : "descending";
+                  const indicator = !active ? "" : sort?.direction === "asc" ? " ▲" : " ▼";
+                  return (
+                    <th
+                      key={x.attributeName}
+                      role="columnheader"
+                      scope="col"
+                      aria-sort={ariaSort}
+                    >
+                      <button
+                        type="button"
+                        className="th-sort"
+                        onClick={() => toggleSort(x.attributeName)}
+                      >
+                        {x.displayText}
+                        <span aria-hidden="true">{indicator}</span>
+                      </button>
+                    </th>
+                  );
+                })
               ) : (
                 <th role="columnheader" scope="col">
                   No headers. Consider adding autofill option

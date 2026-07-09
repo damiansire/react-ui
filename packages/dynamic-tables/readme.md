@@ -199,6 +199,13 @@ In this example, we have enabled automatic header generation with the `HeadersAu
     headers are generated automatically from the keys of the row data.
   - `onCellEdit` (`(rowId, columnId, value) => void`): called when a cell edit is
     committed. This is how you read back what the user edited.
+  - `sortable` (`boolean`): when `true`, each column header becomes a button that
+    cycles unsorted → ascending → descending → unsorted. Numeric columns (including
+    numeric strings like `"10"`) sort numerically; everything else sorts as text.
+    The sort is stable and non-destructive — a third click restores the original
+    row order. Sorting reorders the displayed rows only; committed edits are keyed
+    by row id, so they follow their row across sorts. The active column exposes
+    `aria-sort` for screen readers.
 
 ### getCell
 

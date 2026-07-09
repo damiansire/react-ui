@@ -8,7 +8,7 @@ this repository.
 
 | Package | npm | What it does |
 |---|---|---|
-| [`dynamic-tables`](packages/dynamic-tables) | [`react-dinamic-tables`](https://www.npmjs.com/package/react-dinamic-tables) | Dynamic, interactive tables with keyboard-driven cell selection and editing. |
+| [`dynamic-tables`](packages/dynamic-tables) | [`react-dinamic-tables`](https://www.npmjs.com/package/react-dinamic-tables) | Dynamic, interactive tables with keyboard-driven cell selection and editing, plus opt-in column sorting. |
 
 ## Roadmap
 
@@ -23,9 +23,9 @@ like to see? Open an issue.
 ## `react-dinamic-tables`
 
 A `Table` component that renders tabular data and lets you **select** and
-**edit** cells directly with the keyboard. Built to display and interact with
-data in web apps, with solid accessibility support (`role="grid"`,
-`aria-selected`, state announced via `aria-live`).
+**edit** cells directly with the keyboard, with **opt-in column sorting**. Built
+to display and interact with data in web apps, with solid accessibility support
+(`role="grid"`, `aria-selected`, `aria-sort`, state announced via `aria-live`).
 
 ### Installation
 

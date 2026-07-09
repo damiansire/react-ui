@@ -32,4 +32,10 @@ export interface TableOptions {
      * edición es write-only (el estado vive interno en el componente).
      */
     onCellEdit?: (rowId: string, columnId: string, value: string) => void;
+    /**
+     * Habilita el ordenamiento por columna: cada encabezado pasa a ser un botón
+     * que cicla sin-orden → ascendente → descendente → sin-orden. Opt-in: sin
+     * esto los encabezados son estáticos y las filas conservan el orden de `rows`.
+     */
+    sortable?: boolean;
 }

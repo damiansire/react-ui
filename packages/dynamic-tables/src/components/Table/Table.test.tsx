@@ -400,3 +400,68 @@ describe("Table - accesibilidad (grid semantics)", () => {
     expect(screen.getByRole("textbox", { name: /editar name/i })).toBeInTheDocument();
   });
 });
+
+describe("Table - ordenamiento por columna (options.sortable)", () => {
+  const sortHeaders: Header[] = [
+    { attributeName: "name", displayText: "Nombre" },
+    { attributeName: "amount", displayText: "Monto" },
+  ];
+  // Desordenadas a propósito; amount como string para probar orden numérico.
+  const sortRowsData: Row[] = [
+    { id: "1", name: "Carla", amount: "100" },
+    { id: "2", name: "Ana", amount: "9" },
+    { id: "3", name: "Bruno", amount: "20" },
+  ];
+
+  const bodyOrder = (container: HTMLElement, column: string) =>
+    Array.from(
+      container.querySelectorAll(`tbody td[column-id="${column}"]`)
+    ).map((td) => td.textContent);
+
+  it("sin la opción, los encabezados NO son botones y no reordenan", () => {
+    render(<Table headers={sortHeaders} rows={sortRowsData} />);
+    expect(
+      screen.queryByRole("button", { name: /Nombre/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("un clic ordena ascendente y marca aria-sort", () => {
+    const { container } = render(
+      <Table headers={sortHeaders} rows={sortRowsData} options={{ sortable: true }} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Nombre/ }));
+
+    expect(bodyOrder(container, "name")).toEqual(["Ana", "Bruno", "Carla"]);
+    expect(
+      screen.getByRole("columnheader", { name: /Nombre/ })
+    ).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  it("segundo clic ordena descendente; tercero vuelve al orden original", () => {
+    const { container } = render(
+      <Table headers={sortHeaders} rows={sortRowsData} options={{ sortable: true }} />
+    );
+    const btn = screen.getByRole("button", { name: /Nombre/ });
+
+    fireEvent.click(btn); // asc
+    fireEvent.click(btn); // desc
+    expect(bodyOrder(container, "name")).toEqual(["Carla", "Bruno", "Ana"]);
+    expect(
+      screen.getByRole("columnheader", { name: /Nombre/ })
+    ).toHaveAttribute("aria-sort", "descending");
+
+    fireEvent.click(btn); // sin orden → orden original de rows
+    expect(bodyOrder(container, "name")).toEqual(["Carla", "Ana", "Bruno"]);
+    expect(
+      screen.getByRole("columnheader", { name: /Nombre/ })
+    ).toHaveAttribute("aria-sort", "none");
+  });
+
+  it("ordena numéricamente por una columna de números-string (9 < 20 < 100)", () => {
+    const { container } = render(
+      <Table headers={sortHeaders} rows={sortRowsData} options={{ sortable: true }} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Monto/ }));
+    expect(bodyOrder(container, "amount")).toEqual(["9", "20", "100"]);
+  });
+});
