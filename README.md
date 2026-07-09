@@ -10,6 +10,14 @@ this repository.
 |---|---|---|
 | [`dynamic-tables`](packages/dynamic-tables) | [`react-dinamic-tables`](https://www.npmjs.com/package/react-dinamic-tables) | Dynamic, interactive tables with keyboard-driven cell selection and editing. |
 
+## Roadmap
+
+Today this repo ships a single component. It is deliberately structured as a
+workspaces monorepo so more **keyboard-first, accessible** React primitives can
+be added over time — each published under its own npm name and versioned
+together here — rather than starting a new repo per component. Have one you'd
+like to see? Open an issue.
+
 ---
 
 ## `react-dinamic-tables`
