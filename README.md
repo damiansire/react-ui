@@ -1,5 +1,9 @@
 # react-ui
 
+[![CI](https://github.com/damiansire/react-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/damiansire/react-ui/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/react-dinamic-tables.svg)](https://www.npmjs.com/package/react-dinamic-tables)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Reusable React UI components, organized as an npm-workspaces monorepo. Each
 package is published to npm under its own name, but they all evolve together in
 this repository.
@@ -83,6 +87,7 @@ import Table from "react-dinamic-tables";
 | `HeadersAutoFill` | `boolean` | If `true` and `headers` is empty, columns are generated automatically from the rows' keys. |
 | `label` | `string` | Accessible label for the table (`aria-label`). |
 | `onCellEdit` | `(rowId, columnId, value) => void` | Called when a cell edit is confirmed. This is how you read out what the user edited. |
+| `sortable` | `boolean` | Opt-in column sorting. When `true`, each header becomes a button that cycles unsorted → ascending → descending → unsorted. Off by default, so headers stay static and rows keep the order of `rows`. |
 
 ### Keyboard interaction
 
@@ -100,6 +105,16 @@ import Table from "react-dinamic-tables";
   rows={rows}
   options={{ HeadersAutoFill: true, noRowsText: "No data yet" }}
 />
+```
+
+### Column sorting
+
+Sorting is opt-in via `options.sortable`. Each header becomes a button that
+cycles through unsorted → ascending → descending, with the state exposed via
+`aria-sort`:
+
+```jsx
+<Table headers={headers} rows={rows} options={{ sortable: true }} />
 ```
 
 ### `getCell` utility

@@ -1,0 +1,9 @@
+# Enlaces que lychee no debe chequear (evita falsos positivos en CI).
+
+# npmjs.com sirve un 403 anti-bot a clientes automatizados aunque el paquete
+# exista y esté publicado (verificable en registry.npmjs.org). El link es real.
+https://www.npmjs.com/package/
+
+# localhost / dev servers (Storybook corre en :6006).
+^https?://localhost
+^https?://127\.0\.0\.1

@@ -1,0 +1,33 @@
+name: Links
+
+# Valida que los links y badges del README (y demás .md) resuelvan, para que un
+# badge roto o un link muerto no llegue a main sin que nadie lo note.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check links in Markdown
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # --no-progress: sin ruido de barra en CI.
+          # --cache: revalida solo lo que cambió entre corridas.
+          args: >-
+            --no-progress
+            --cache
+            --max-cache-age 1d
+            './**/*.md'
+          fail: true
+        env:
+          # El token evita el rate-limit de GitHub al chequear links a github.com.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
