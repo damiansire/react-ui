@@ -19,7 +19,10 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        # npm install (not ci) so platform-specific optional deps like
+        # @rollup/rollup-linux-x64-gnu are resolved for the runner, working
+        # around npm's optional-deps bug (npm/cli#4828).
+        run: npm install
 
       # Build primero: los type-tests, la resolución del .d.ts y el presupuesto
       # de bundle leen dist/.
