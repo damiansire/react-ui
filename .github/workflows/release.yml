@@ -1,0 +1,59 @@
+name: Release
+
+# Opens a "Version Packages" PR when changesets are present, and publishes the
+# changed packages to npm once that PR is merged.
+#
+# Requires a repo secret `NPM_TOKEN` — a classic npm Automation token (bypasses
+# 2FA in CI; granular tokens tend to bounce with E403).
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        # vitest bundles a nested rollup whose platform-specific optional dep
+        # (@rollup/rollup-linux-x64-gnu) npm fails to install from the lockfile
+        # (npm/cli#4828). Dropping the lockfile forces a fresh, platform-correct
+        # resolution — same workaround as ci.yml.
+        run: |
+          rm -f package-lock.json
+          npm install
+
+      # Never publish an artifact this pipeline did not verify. Gate the
+      # publish on the same checks ci.yml runs.
+      - name: Build library
+        run: npm run -w react-dinamic-tables rollup-build-lib
+
+      - name: Typecheck
+        run: npm run -w react-dinamic-tables typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build Storybook (a11y addon)
+        run: npm run -w react-dinamic-tables build-storybook
+
+      - name: Create Release PR or publish
+        uses: changesets/action@v1
+        with:
+          version: npm run version-packages
+          publish: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -6,6 +6,13 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "npm run test --workspaces --if-present"
+    "build": "npm run -w react-dinamic-tables rollup-build-lib",
+    "test": "npm run test --workspaces --if-present",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "npm run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0"
   }
 }
