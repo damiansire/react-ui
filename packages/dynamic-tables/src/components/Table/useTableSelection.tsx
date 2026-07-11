@@ -19,11 +19,22 @@ const isMovementKey = (keyEvent: string): keyEvent is MovementKey => {
   return (Object.values(MovementKey) as string[]).includes(keyEvent);
 };
 
+/** Subconjunto de la API de `@tanstack/react-virtual` que necesita este hook:
+ * pedirle al virtualizador que traiga un índice de fila a la vista. */
+export interface RowVirtualizerLike {
+  scrollToIndex: (index: number, options?: { align?: "auto" | "start" | "center" | "end" }) => void;
+}
+
+// Cuántos frames reintentar el foco tras pedirle al virtualizador que traiga
+// la fila a la vista, antes de resignarse (la fila tardó demasiado en montar).
+const MAX_VIRTUAL_FOCUS_RETRIES = 15;
+
 export const useTableSelection = (
   rows: Row[],
   headers: Header[],
   tableRef: React.RefObject<HTMLTableElement>,
-  isEditing = false
+  isEditing = false,
+  rowVirtualizer?: RowVirtualizerLike
 ): [
   SelectedCell,
   (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void,
@@ -103,10 +114,39 @@ export const useTableSelection = (
             nextCell.scrollIntoView({ block: "nearest", inline: "nearest" });
           }
           setSelectedCell({ trId: nextRow.id, columnId });
+        } else if (rowVirtualizer) {
+          // La fila destino no está montada (tabla virtualizada, fuera del
+          // viewport renderizado). Actualizamos la selección igual —así el
+          // status aria-live y el resaltado quedan consistentes de inmediato—
+          // y le pedimos al virtualizador que la traiga a la vista. El nodo
+          // real tarda un ciclo de render en aparecer, así que reintentamos el
+          // foco en frames sucesivos (acotado) hasta que exista.
+          setSelectedCell({ trId: nextRow.id, columnId });
+          rowVirtualizer.scrollToIndex(nextRowIndex, { align: "auto" });
+
+          let attempts = 0;
+          const tryFocus = () => {
+            const settledCell = getCell(tableRef, nextRow.id, columnId);
+            if (settledCell) {
+              settledCell.focus();
+              if (typeof settledCell.scrollIntoView === "function") {
+                settledCell.scrollIntoView({
+                  block: "nearest",
+                  inline: "nearest",
+                });
+              }
+              return;
+            }
+            attempts += 1;
+            if (attempts < MAX_VIRTUAL_FOCUS_RETRIES) {
+              requestAnimationFrame(tryFocus);
+            }
+          };
+          requestAnimationFrame(tryFocus);
         }
       }
     },
-    [rows, selectedCell, headers, getNextIndex, tableRef, isEditing]
+    [rows, selectedCell, headers, getNextIndex, tableRef, isEditing, rowVirtualizer]
   );
 
   useEffect(() => {

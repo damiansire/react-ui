@@ -13,8 +13,8 @@ convendría reconsiderar esa decisión.
 
 | | react-dynamic-tables | TanStack Table | AG Grid | react-data-grid |
 |---|---|---|---|---|
-| Bundle (min+gzip) | ~pendiente de medir (ver ru-2) | ~15 KB (headless, sin UI) | Community: ~470 KB · Enterprise: más | ~60 KB |
-| Virtualización (10k+ filas) | **No implementada** (ver ru-2) | No incluida (se compone con `@tanstack/virtual`) | Sí, nativa | Sí, nativa |
+| Bundle (min+gzip) | ~7.8 KB (React y `@tanstack/react-virtual` externos) | ~15 KB (headless, sin UI) | Community: ~470 KB · Enterprise: más | ~60 KB |
+| Virtualización (10k+ filas) | Sí, opt-in (`options.virtualized`, vía `@tanstack/virtual`) — 10k filas: ~144x más rápido al montar | No incluida (se compone con `@tanstack/virtual`) | Sí, nativa | Sí, nativa |
 | Edición de celdas por teclado | Sí, es el foco del componente | No (headless, hay que construirlo) | Sí (Community) | Sí |
 | Licencia | MIT (propio) | MIT | MIT (Community) / comercial (Enterprise) | MIT |
 | Curva de adopción para consumidores | Cero dependencias externas de tabla | Requiere componer headless + UI propia | API grande, curva de aprendizaje mayor | API media |
@@ -30,11 +30,18 @@ movería el problema (construir la UI de edición) sin eliminarlo.
 ## Lo que falta para que esta decisión sea defendible con datos, no solo con
 ## intuición
 
-- **ru-2**: benchmark de render con 10k+ filas y virtualización real — hoy no
-  hay evidencia de que el componente escale más allá de datasets chicos, que es
-  justamente donde AG Grid/react-data-grid ya tienen resuelto el problema.
-- Medir el bundle size real (hoy no está documentado) y compararlo contra la
-  fila de arriba.
+- ~~**ru-2**: benchmark de render con 10k+ filas y virtualización real~~ —
+  **resuelto.** `options.virtualized` (vía `@tanstack/react-virtual`) monta solo
+  las filas del viewport + overscan; benchmark real en
+  `src/components/Table/virtualization.bench.test.ts`: 10.000 filas pasan de
+  ~6768ms a ~47ms al montar (~144x), y de 10.000 nodos `<tr>` a un puñado fijo.
+  La navegación por teclado (incluido el wraparound de flechas) sigue
+  funcionando cruzando el límite virtualizado. Detalle y la tabla completa en
+  el README del paquete, sección "Performance".
+- Medir el bundle size real: el entry ESM (React externo, sin
+  `@tanstack/react-virtual` inlineado) pesa ~7.8 KB gzip
+  (`src/components/Table/bundle-budget.test.ts`, presupuesto 10 KB) — ya
+  comparable a la fila "Bundle" de arriba, falta solo actualizar esa celda.
 - **ru-6**: conseguir al menos un consumidor real fuera de este monorepo — sin
   eso, la comparación es hipotética.
 
@@ -48,7 +55,8 @@ movería el problema (construir la UI de edición) sin eliminarlo.
 
 ## Consecuencias
 
-Mientras no se cierre `ru-2` (virtualización + benchmark), la elección de
-mantener una implementación propia sigue siendo una apuesta sin evidencia de
-que escale mejor —o peor— que las alternativas maduras. Este documento se
-debe revisar cuando eso se resuelva.
+`ru-2` (virtualización + benchmark) está cerrado con evidencia: la tabla ya
+escala a datasets grandes sin pagar el costo de montar cada fila. Sigue
+pendiente `ru-6` (un consumidor real fuera de este monorepo) para que la
+comparación deje de ser hipotética del todo. Este documento se debe revisar
+cuando eso se resuelva.

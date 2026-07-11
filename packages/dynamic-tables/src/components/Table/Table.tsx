@@ -6,6 +6,7 @@ import React, {
   useMemo,
   forwardRef,
 } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import "./table.css";
 import { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
@@ -65,6 +66,10 @@ const Cell = ({
 const TableComponent = forwardRef<HTMLTableElement, TableProps>(
   ({ rows = [], headers = [], options = {} }, forwardedRef) => {
     const noRowsText = options.noRowsText ? options.noRowsText : "No data";
+    const isVirtualized = Boolean(options.virtualized);
+    const rowHeight = options.rowHeight ?? 37;
+    const viewportHeight = options.height ?? 400;
+    const overscan = options.overscan ?? 6;
 
     let rendersHeaders: Header[] = headers;
     if (rendersHeaders.length === 0 && options.HeadersAutoFill) {
@@ -125,8 +130,34 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     );
     const editInputRef = useRef<HTMLInputElement>(null);
 
+    // Contenedor con scroll propio cuando `virtualized` está activo. Sin
+    // virtualización el scroll lo maneja el documento como siempre (no se usa).
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+    const rowVirtualizer = useVirtualizer({
+      count: displayedRows.length,
+      getScrollElement: () => scrollContainerRef.current,
+      estimateSize: () => rowHeight,
+      overscan,
+      enabled: isVirtualized,
+      // Sin esto, el primer render depende de que ResizeObserver reporte el
+      // tamaño real del contenedor (async) antes de poder calcular qué filas
+      // van dentro del viewport — un parpadeo de tabla vacía en el primer
+      // paint. Como `options.height` YA fija el alto del contenedor, se lo
+      // pasamos de entrada: el virtualizador puede pintar filas reales desde
+      // el primer render, y el ResizeObserver solo corrige después si el
+      // tamaño real difiere (p. ej. el consumidor no fijó `height` en px).
+      initialRect: { width: 0, height: viewportHeight },
+    });
+
     const [selectedCell, handleBodyTrClick, setSelectedCell] =
-      useTableSelection(displayedRows, rendersHeaders, tableRef, Boolean(editing));
+      useTableSelection(
+        displayedRows,
+        rendersHeaders,
+        tableRef,
+        Boolean(editing),
+        isVirtualized ? rowVirtualizer : undefined
+      );
 
     // Permite iniciar la navegación con teclado: al enfocar la tabla sin
     // selección previa, seleccionar la primera celda [0,0] (patrón APG Data Grid).
@@ -302,20 +333,52 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editing]);
 
+    const emptyRow = (
+      <tr role="row">
+        <td
+          role="gridcell"
+          colSpan={rendersHeaders.length || 1}
+          className="no-data"
+        >
+          {noRowsText}
+        </td>
+      </tr>
+    );
+
     const renderRows = () => {
+      if (displayedRows.length === 0) return emptyRow;
+
+      if (!isVirtualized) {
+        return displayedRows.map((row) => renderRow(row, rendersHeaders));
+      }
+
+      // Solo montamos las filas visibles (+ overscan). El resto del espacio se
+      // simula con dos <tr> "espaciadoras" cuya altura reserva el lugar de las
+      // filas no montadas, así el scrollbar del contenedor refleja el tamaño
+      // TOTAL de `displayedRows`, no solo el de las filas presentes en el DOM.
+      const virtualItems = rowVirtualizer.getVirtualItems();
+      const totalSize = rowVirtualizer.getTotalSize();
+      const firstVirtualItem = virtualItems[0];
+      const lastVirtualItem = virtualItems[virtualItems.length - 1];
+      const paddingTop = firstVirtualItem ? firstVirtualItem.start : 0;
+      const paddingBottom = lastVirtualItem
+        ? totalSize - lastVirtualItem.end
+        : 0;
+
       return (
         <>
-          {displayedRows.length > 0 ? (
-            displayedRows.map((row) => renderRow(row, rendersHeaders))
-          ) : (
-            <tr role="row">
-              <td
-                role="gridcell"
-                colSpan={rendersHeaders.length || 1}
-                className="no-data"
-              >
-                {noRowsText}
-              </td>
+          {paddingTop > 0 && (
+            <tr aria-hidden="true" style={{ height: paddingTop }}>
+              <td colSpan={rendersHeaders.length || 1} />
+            </tr>
+          )}
+          {virtualItems.map((virtualRow) => {
+            const row = displayedRows[virtualRow.index];
+            return row ? renderRow(row, rendersHeaders) : null;
+          })}
+          {paddingBottom > 0 && (
+            <tr aria-hidden="true" style={{ height: paddingBottom }}>
+              <td colSpan={rendersHeaders.length || 1} />
             </tr>
           )}
         </>
@@ -329,61 +392,75 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           }`
         : "Sin celda seleccionada";
 
-    return (
-      <>
-        <table
-          ref={setTableRef}
-          tabIndex={0}
-          role="grid"
-          aria-label={options.label ?? "Tabla de datos"}
-          className="table"
-          onFocus={handleTableFocus}
-        >
-          <thead>
-            <tr role="row">
-              {rendersHeaders.length > 0 ? (
-                rendersHeaders.map((x) => {
-                  if (!options.sortable) {
-                    return (
-                      <th key={x.attributeName} role="columnheader" scope="col">
-                        {x.displayText}
-                      </th>
-                    );
-                  }
-                  const active = sort?.columnId === x.attributeName;
-                  const ariaSort = !active
-                    ? "none"
-                    : sort?.direction === "asc"
-                      ? "ascending"
-                      : "descending";
-                  const indicator = !active ? "" : sort?.direction === "asc" ? " ▲" : " ▼";
+    const table = (
+      <table
+        ref={setTableRef}
+        tabIndex={0}
+        role="grid"
+        aria-label={options.label ?? "Tabla de datos"}
+        className="table"
+        onFocus={handleTableFocus}
+      >
+        <thead>
+          <tr role="row">
+            {rendersHeaders.length > 0 ? (
+              rendersHeaders.map((x) => {
+                if (!options.sortable) {
                   return (
-                    <th
-                      key={x.attributeName}
-                      role="columnheader"
-                      scope="col"
-                      aria-sort={ariaSort}
-                    >
-                      <button
-                        type="button"
-                        className="th-sort"
-                        onClick={() => toggleSort(x.attributeName)}
-                      >
-                        {x.displayText}
-                        <span aria-hidden="true">{indicator}</span>
-                      </button>
+                    <th key={x.attributeName} role="columnheader" scope="col">
+                      {x.displayText}
                     </th>
                   );
-                })
-              ) : (
-                <th role="columnheader" scope="col">
-                  No headers. Consider adding autofill option
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>{renderRows()}</tbody>
-        </table>
+                }
+                const active = sort?.columnId === x.attributeName;
+                const ariaSort = !active
+                  ? "none"
+                  : sort?.direction === "asc"
+                    ? "ascending"
+                    : "descending";
+                const indicator = !active ? "" : sort?.direction === "asc" ? " ▲" : " ▼";
+                return (
+                  <th
+                    key={x.attributeName}
+                    role="columnheader"
+                    scope="col"
+                    aria-sort={ariaSort}
+                  >
+                    <button
+                      type="button"
+                      className="th-sort"
+                      onClick={() => toggleSort(x.attributeName)}
+                    >
+                      {x.displayText}
+                      <span aria-hidden="true">{indicator}</span>
+                    </button>
+                  </th>
+                );
+              })
+            ) : (
+              <th role="columnheader" scope="col">
+                No headers. Consider adding autofill option
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody>{renderRows()}</tbody>
+      </table>
+    );
+
+    return (
+      <>
+        {isVirtualized ? (
+          <div
+            ref={scrollContainerRef}
+            className="table-scroll-container"
+            style={{ height: viewportHeight, overflow: "auto" }}
+          >
+            {table}
+          </div>
+        ) : (
+          table
+        )}
         <div
           className="table-sr-status"
           role="status"

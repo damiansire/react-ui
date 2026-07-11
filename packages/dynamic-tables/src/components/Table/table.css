@@ -3,6 +3,20 @@
   border-collapse: collapse;
 }
 
+/* Contenedor de scroll cuando options.virtualized está activo. El alto lo
+   fija la prop inline `style` (options.height); acá solo el comportamiento
+   visual del scroll y el header pegajoso. */
+.table-scroll-container {
+  overflow: auto;
+  position: relative;
+}
+
+.table-scroll-container .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .table th,
 .table td {
   box-sizing: border-box;

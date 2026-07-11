@@ -206,6 +206,48 @@ In this example, we have enabled automatic header generation with the `HeadersAu
     row order. Sorting reorders the displayed rows only; committed edits are keyed
     by row id, so they follow their row across sorts. The active column exposes
     `aria-sort` for screen readers.
+  - `virtualized` (`boolean`): when `true`, only the rows inside the visible
+    viewport (+ overscan) are mounted to the DOM, via
+    [`@tanstack/react-virtual`](https://tanstack.com/virtual). Opt-in: it changes
+    the table's scroll container from the document to a fixed-height `<div>`. See
+    [Performance](#performance) below for real numbers and the other three options
+    it comes with (`rowHeight`, `height`, `overscan`).
+  - `rowHeight` (`number`): px height per row, used by the virtualizer to estimate
+    total scroll size. Only relevant when `virtualized` is `true`. Default: `37`.
+  - `height` (`number`): px height of the scrollable viewport when `virtualized`
+    is `true`. Default: `400`.
+  - `overscan` (`number`): extra rows rendered outside the visible viewport
+    (above/below), so fast scroll and keyboard navigation don't show blank gaps
+    while the DOM catches up. Only relevant when `virtualized` is `true`. Default: `6`.
+
+## Performance
+
+Without `options.virtualized`, every row in `rows` is mounted to the DOM — fine
+for small datasets, but it doesn't scale. With it, only the rows inside the
+viewport (+ overscan) are ever mounted, regardless of how large `rows` is.
+Keyboard navigation (arrows, wraparound) still works across the virtualized
+boundary: moving to a row outside the mounted window scrolls it into view first,
+then focuses it once it mounts.
+
+Real benchmark (`src/components/Table/virtualization.bench.test.ts`, measured
+with `performance.now()` around the full mount, jsdom/Vitest on this machine —
+absolute numbers vary by environment, but the *ratio* is the point):
+
+| Rows   | Without `virtualized` | With `virtualized` |
+| ------ | ---------------------- | ------------------- |
+| 10,000 | ~6768 ms                | ~47 ms               |
+
+That's roughly a **144x** reduction in mount time, and the DOM node count drops
+from 10,000 `<tr>` elements to a couple dozen (viewport + overscan) regardless of
+dataset size.
+
+```jsx
+<TableComponent
+  headers={headers}
+  rows={tenThousandRows}
+  options={{ virtualized: true, rowHeight: 37, height: 400 }}
+/>
+```
 
 ### getCell
 

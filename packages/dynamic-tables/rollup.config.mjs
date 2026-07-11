@@ -8,11 +8,17 @@ import postcss from "rollup-plugin-postcss";
 // React y sus subpaths viven en la app consumidora (peerDependencies); deben
 // quedar `external` para no inlinear React en el bundle (evita "Invalid hook
 // call" por dos instancias de React en runtime).
+// @tanstack/react-virtual es una `dependencies` real (no peer) pero también
+// queda `external`: es código de terceros que npm ya instala en el árbol de
+// la app consumidora, e inlinearlo triplicaba el presupuesto de bundle
+// (10 KB → ~19 KB gzip) sin necesidad — el mismo criterio que React.
 const external = (id) =>
   id === "react" ||
   id === "react-dom" ||
   id.startsWith("react/") ||
-  id.startsWith("react-dom/");
+  id.startsWith("react-dom/") ||
+  id === "@tanstack/react-virtual" ||
+  id.startsWith("@tanstack/react-virtual/");
 
 export default [
   {
