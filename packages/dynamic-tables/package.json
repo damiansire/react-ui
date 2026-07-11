@@ -1,6 +1,6 @@
 {
-  "name": "react-dinamic-tables",
-  "version": "0.0.2",
+  "name": "react-dynamic-tables",
+  "version": "0.0.3",
   "description": "Componente React de tablas dinámicas e interactivas, con selección y edición de celdas mediante teclado.",
   "keywords": [
     "react",

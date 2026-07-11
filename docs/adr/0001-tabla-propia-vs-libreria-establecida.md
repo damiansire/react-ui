@@ -1,8 +1,8 @@
-# 0001. Tabla propia (react-dinamic-tables) vs librería establecida
+# 0001. Tabla propia (react-dynamic-tables) vs librería establecida
 
 ## Contexto
 
-`react-dinamic-tables` es un componente de tabla editable con navegación e
+`react-dynamic-tables` es un componente de tabla editable con navegación e
 edición por teclado. Existen alternativas maduras y ampliamente adoptadas
 (TanStack Table, AG Grid, react-data-grid) que ya resuelven virtualización,
 ordenamiento, filtrado y edición de celdas. Este ADR documenta por qué existe
@@ -11,7 +11,7 @@ convendría reconsiderar esa decisión.
 
 ## Comparación
 
-| | react-dinamic-tables | TanStack Table | AG Grid | react-data-grid |
+| | react-dynamic-tables | TanStack Table | AG Grid | react-data-grid |
 |---|---|---|---|---|
 | Bundle (min+gzip) | ~pendiente de medir (ver ru-2) | ~15 KB (headless, sin UI) | Community: ~470 KB · Enterprise: más | ~60 KB |
 | Virtualización (10k+ filas) | **No implementada** (ver ru-2) | No incluida (se compone con `@tanstack/virtual`) | Sí, nativa | Sí, nativa |

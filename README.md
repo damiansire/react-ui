@@ -1,7 +1,7 @@
 # react-ui
 
 [![CI](https://github.com/damiansire/react-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/damiansire/react-ui/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/react-dinamic-tables.svg)](https://www.npmjs.com/package/react-dinamic-tables)
+[![npm](https://img.shields.io/npm/v/react-dynamic-tables.svg)](https://www.npmjs.com/package/react-dynamic-tables)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Reusable React UI components, organized as an npm-workspaces monorepo. Each
@@ -12,7 +12,7 @@ this repository.
 
 | Package | npm | What it does |
 |---|---|---|
-| [`dynamic-tables`](packages/dynamic-tables) | [`react-dinamic-tables`](https://www.npmjs.com/package/react-dinamic-tables) | Dynamic, interactive tables with keyboard-driven cell selection and editing, plus opt-in column sorting. |
+| [`dynamic-tables`](packages/dynamic-tables) | [`react-dynamic-tables`](https://www.npmjs.com/package/react-dynamic-tables) | Dynamic, interactive tables with keyboard-driven cell selection and editing, plus opt-in column sorting. |
 
 ## Roadmap
 
@@ -24,7 +24,7 @@ like to see? Open an issue.
 
 ---
 
-## `react-dinamic-tables`
+## `react-dynamic-tables`
 
 A `Table` component that renders tabular data and lets you **select** and
 **edit** cells directly with the keyboard, with **opt-in column sorting**. Built
@@ -34,7 +34,7 @@ to display and interact with data in web apps, with solid accessibility support
 ### Installation
 
 ```bash
-npm i react-dinamic-tables
+npm i react-dynamic-tables
 ```
 
 > Requires `react` and `react-dom` 18 as _peer dependencies_.
@@ -46,7 +46,7 @@ optional `options` object.
 
 ```jsx
 import React from "react";
-import { Table } from "react-dinamic-tables";
+import { Table } from "react-dynamic-tables";
 
 const headers = [
   { attributeName: "name", displayText: "Name" },
@@ -68,7 +68,7 @@ export default function App() {
 `Table` is also available as a _default export_:
 
 ```jsx
-import Table from "react-dinamic-tables";
+import Table from "react-dynamic-tables";
 ```
 
 ### Main props
@@ -122,7 +122,7 @@ cycles through unsorted → ascending → descending, with the state exposed via
 Retrieves a specific cell from a table `ref`:
 
 ```jsx
-import { getCell } from "react-dinamic-tables";
+import { getCell } from "react-dynamic-tables";
 
 const tableRef = React.useRef(null);
 const cell = getCell(tableRef, "rowId", "columnId");
@@ -136,6 +136,8 @@ const cell = getCell(tableRef, "rowId", "columnId");
 
 ---
 
-> **Note:** the name published on npm is `react-dinamic-tables` (with the typo
-> "dinamic" instead of "dynamic"). The installation examples use the real
-> published name on purpose.
+> **Migration note (2026-07):** the package was renamed from `react-dinamic-tables`
+> (a permanent typo, "dinamic" instead of "dynamic") to `react-dynamic-tables`.
+> The old name is deprecated on npm and points here — update your `import`/
+> `package.json` to `react-dynamic-tables`; the old name still resolves but
+> won't receive new versions.

@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run -w react-dinamic-tables rollup-build-lib",
+    "build": "npm run -w react-dynamic-tables rollup-build-lib",
     "test": "npm run test --workspaces --if-present",
     "changeset": "changeset",
     "version-packages": "changeset version",

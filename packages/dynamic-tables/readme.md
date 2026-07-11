@@ -7,9 +7,9 @@ The Table Component is a React component that allows you to display data in a ta
 To use the Table Component in your React project, you can install it via npm or yarn:
 
 ```bash
-npm install react-dinamic-tables
+npm install react-dynamic-tables
 # or
-yarn add react-dinamic-tables
+yarn add react-dynamic-tables
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ To use the Table Component in your React application, you can import it and incl
 
 ```jsx
 import React from "react";
-import TableComponent from "react-dinamic-tables";
+import TableComponent from "react-dynamic-tables";
 
 function App() {
   const headers = [
@@ -61,7 +61,7 @@ export default App;
 
 ```jsx
 import React from "react";
-import TableComponent from "react-dinamic-tables";
+import TableComponent from "react-dynamic-tables";
 
 function App() {
   const headers = [
@@ -89,7 +89,7 @@ In this example, the table is empty, and no custom message is displayed. Use the
 
 ```jsx
 import React from "react";
-import TableComponent from "react-dinamic-tables";
+import TableComponent from "react-dynamic-tables";
 
 function App() {
   const headers = [
@@ -122,7 +122,7 @@ In this example, we have defined a custom message in the `noRowsText` option. Wh
 
 ```jsx
 import React from "react";
-import TableComponent from "react-dinamic-tables";
+import TableComponent from "react-dynamic-tables";
 
 function App() {
   const headers = []; // Empty array, no headers
@@ -154,7 +154,7 @@ In this example, we provided an empty array for `headers`, resulting in a table 
 
 ```jsx
 import React from "react";
-import TableComponent from "react-dinamic-tables";
+import TableComponent from "react-dynamic-tables";
 
 function App() {
   const headers = []; // Empty array
@@ -212,7 +212,7 @@ In this example, we have enabled automatic header generation with the `HeadersAu
 A utility function that can be used to retrieve a specific cell within the table.
 
 ```jsx
-import { getCell } from "react-dinamic-tables";
+import { getCell } from "react-dynamic-tables";
 
 const tableRef = React.createRef();
 const cell = getCell(tableRef, "rowId", "columnId");

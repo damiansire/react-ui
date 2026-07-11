@@ -32,7 +32,7 @@ describe("Resolución de tipos del paquete construido (.d.ts)", () => {
   });
 
   it("un consumidor importa los tipos del paquete construido y compila", () => {
-    // Resuelve `react-dinamic-tables` por su `exports`/`types` map (igual que
+    // Resuelve `react-dynamic-tables` por su `exports`/`types` map (igual que
     // un usuario externo). Si la cadena del .d.ts se rompe, tsc falla aquí.
     const run = () =>
       execFileSync(

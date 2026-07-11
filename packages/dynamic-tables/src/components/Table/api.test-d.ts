@@ -16,7 +16,7 @@ describe("API público: tipos", () => {
   });
 
   it("el paquete expone un default export equivalente al named Table", () => {
-    // El README documenta `import Table from "react-dinamic-tables"`.
+    // El README documenta `import Table from "react-dynamic-tables"`.
     expectTypeOf(DefaultTable).toMatchTypeOf<ComponentType<TableProps>>();
     expectTypeOf(DefaultTable).toEqualTypeOf<typeof Table>();
   });
