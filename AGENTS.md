@@ -11,7 +11,7 @@ evolucionan juntos en este repo.
 
 | Paquete | npm | Qué hace |
 |---|---|---|
-| `dynamic-tables` (`react-dinamic-tables`) | publicado | Tablas dinámicas e interactivas con selección y edición de celdas. |
+| `dynamic-tables` (`react-dynamic-tables`) | publicado | Tablas dinámicas e interactivas con selección y edición de celdas. |
 
 ## Comandos canónicos
 
@@ -19,9 +19,9 @@ Correr siempre desde la raíz usando el workspace, **nunca** `cd` a un paquete:
 
 ```bash
 npm install                                   # instala todo el monorepo
-npm run -w react-dinamic-tables storybook     # dev server de Storybook (puerto 6006)
-npm run -w react-dinamic-tables build-storybook
-npm run -w react-dinamic-tables rollup-build-lib   # build de la librería (rollup)
+npm run -w react-dynamic-tables storybook     # dev server de Storybook (puerto 6006)
+npm run -w react-dynamic-tables build-storybook
+npm run -w react-dynamic-tables rollup-build-lib   # build de la librería (rollup)
 ```
 
 ## Estructura de un paquete
@@ -65,8 +65,8 @@ packages/<paquete>/
 
 ## Pre-PR checklist
 
-1. La librería buildea: `npm run -w react-dinamic-tables rollup-build-lib`.
-2. Storybook levanta sin errores: `npm run -w react-dinamic-tables storybook`.
+1. La librería buildea: `npm run -w react-dynamic-tables rollup-build-lib`.
+2. Storybook levanta sin errores: `npm run -w react-dynamic-tables storybook`.
 3. No quedan tipos rotos (cuando se agregue el script de typecheck).
 4. Si tocaste lógica/dominio, dejá un test que lo cubra.
 

@@ -30,10 +30,10 @@ jobs:
       # Build primero: los type-tests, la resolución del .d.ts y el presupuesto
       # de bundle leen dist/.
       - name: Build library
-        run: npm run -w react-dinamic-tables rollup-build-lib
+        run: npm run -w react-dynamic-tables rollup-build-lib
 
       - name: Typecheck
-        run: npm run -w react-dinamic-tables typecheck
+        run: npm run -w react-dynamic-tables typecheck
 
       # Suite completa: unit + componente + a11y + type-tests + resolución .d.ts
       # + presupuesto de bundle.
@@ -42,4 +42,4 @@ jobs:
 
       # Compila Storybook con el addon de a11y habilitado (gate de a11y).
       - name: Build Storybook (a11y addon)
-        run: npm run -w react-dinamic-tables build-storybook
+        run: npm run -w react-dynamic-tables build-storybook

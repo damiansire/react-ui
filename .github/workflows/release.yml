@@ -38,16 +38,16 @@ jobs:
       # Never publish an artifact this pipeline did not verify. Gate the
       # publish on the same checks ci.yml runs.
       - name: Build library
-        run: npm run -w react-dinamic-tables rollup-build-lib
+        run: npm run -w react-dynamic-tables rollup-build-lib
 
       - name: Typecheck
-        run: npm run -w react-dinamic-tables typecheck
+        run: npm run -w react-dynamic-tables typecheck
 
       - name: Test
         run: npm test
 
       - name: Build Storybook (a11y addon)
-        run: npm run -w react-dinamic-tables build-storybook
+        run: npm run -w react-dynamic-tables build-storybook
 
       - name: Create Release PR or publish
         uses: changesets/action@v1
