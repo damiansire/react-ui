@@ -1,4 +1,12 @@
 import "@testing-library/jest-dom/vitest";
+import { expect } from "vitest";
+import { toHaveNoViolations } from "jest-axe";
+
+// jest-axe expone su matcher con la convención de Jest (`toHaveNoViolations`);
+// no depende de ninguna API propia de Jest más allá de eso, así que registrarlo
+// en `expect` de Vitest alcanza para usarlo en toda la suite (ver
+// Table.a11y.test.tsx).
+expect.extend(toHaveNoViolations);
 
 // La navegación por flechas usa `element.scrollIntoView` (reemplaza al antiguo
 // `window.scrollBy` global e impredecible). jsdom no lo implementa; el

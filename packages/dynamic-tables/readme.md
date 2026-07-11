@@ -55,6 +55,19 @@ export default App;
 - Edit cell content by typing.
 - Handles keyboard navigation within the table.
 
+## Accessibility
+
+The grid semantics (`role="grid"`/`gridcell`, `aria-selected`, `aria-sort`,
+an `aria-live` selection status) are exercised two ways:
+
+- `@storybook/addon-a11y` for visual/manual checks while developing in
+  Storybook.
+- [`jest-axe`](https://github.com/nickcolley/jest-axe) running real
+  [axe-core](https://github.com/dequelabs/axe-core) audits in the actual test
+  suite (`src/components/Table/Table.a11y.test.tsx`), on the real headers/edit
+  input/empty states — not just Storybook — so a violation fails `npm test`
+  and CI, not just a manual look.
+
 ### New Features
 
 - **Empty Table Message**: You can now display a custom message when the table is empty. We will use the `EmptyTableMessage` story to demonstrate it:
