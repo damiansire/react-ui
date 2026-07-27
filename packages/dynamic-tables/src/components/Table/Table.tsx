@@ -4,6 +4,7 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  memo,
   forwardRef,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -39,7 +40,10 @@ interface CommittedEdit {
 const isFromHeader = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement && target.closest("thead") !== null;
 
-const Cell = ({
+// `memo`: cada tecla tipeada cambia el borrador en la raiz y volvia a
+// reconciliar el cuerpo entero. Con las props de celda estables (los callbacks
+// lo son), las celdas ajenas a la edicion ya no se re-renderizan.
+const Cell = memo(function Cell({
   value,
   isSelected,
   columnName,
@@ -49,37 +53,39 @@ const Cell = ({
   onCommit,
   onCancel,
   editInputRef,
-}: ICell) => (
-  <td
-    role="gridcell"
-    className={isSelected ? "selected" : ""}
-    column-id={columnName}
-    tabIndex={isSelected ? 0 : -1}
-    aria-selected={isSelected}
-  >
-    {isEditing ? (
-      <input
-        ref={editInputRef}
-        className="cell-editor"
-        aria-label={`Editar ${columnName}`}
-        value={draftValue}
-        onChange={(event) => onDraftChange?.(event.target.value)}
-        onBlur={() => onCommit?.()}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            onCommit?.();
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            onCancel?.();
-          }
-        }}
-      />
-    ) : (
-      value
-    )}
-  </td>
-);
+}: ICell) {
+  return (
+    <td
+      role="gridcell"
+      className={isSelected ? "selected" : ""}
+      column-id={columnName}
+      tabIndex={isSelected ? 0 : -1}
+      aria-selected={isSelected}
+    >
+      {isEditing ? (
+        <input
+          ref={editInputRef}
+          className="cell-editor"
+          aria-label={`Editar ${columnName}`}
+          value={draftValue}
+          onChange={(event) => onDraftChange?.(event.target.value)}
+          onBlur={() => onCommit?.()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onCommit?.();
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              onCancel?.();
+            }
+          }}
+        />
+      ) : (
+        value
+      )}
+    </td>
+  );
+});
 
 const TableComponent = forwardRef<HTMLTableElement, TableProps>(
   ({ rows = [], headers = [], options = {} }, forwardedRef) => {
