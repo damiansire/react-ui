@@ -210,8 +210,12 @@ In this example, we have enabled automatic header generation with the `HeadersAu
   - `noRowsText` (`string`): custom message shown when there are no rows.
   - `HeadersAutoFill` (`boolean`): when `true` and `headers` is empty, the column
     headers are generated automatically from the keys of the row data.
-  - `onCellEdit` (`(rowId, columnId, value) => void`): called when a cell edit is
-    committed. This is how you read back what the user edited.
+  - `onCellEdit` (`(rowId, columnId, value) => void`): called exactly once when a
+    cell edit is committed (also under React StrictMode). This is how you read
+    back what the user edited. `rows` stays the source of truth: the committed
+    value is kept internally only while the prop keeps sending the value it had
+    at commit time. If a later `rows` brings a different value for that cell
+    (normalized or rejected by your backend), the prop wins.
   - `sortable` (`boolean`): when `true`, each column header becomes a button that
     cycles unsorted → ascending → descending → unsorted. Numeric columns (including
     numeric strings like `"10"`) sort numerically; everything else sorts as text.

@@ -86,7 +86,7 @@ import Table from "react-dynamic-tables";
 | `noRowsText` | `string` | Message shown when there are no rows (defaults to `"No data"`). |
 | `HeadersAutoFill` | `boolean` | If `true` and `headers` is empty, columns are generated automatically from the rows' keys. |
 | `label` | `string` | Accessible label for the table (`aria-label`). |
-| `onCellEdit` | `(rowId, columnId, value) => void` | Called when a cell edit is confirmed. This is how you read out what the user edited. |
+| `onCellEdit` | `(rowId, columnId, value) => void` | Called exactly once when a cell edit is confirmed (also under React StrictMode). This is how you read out what the user edited. |
 | `sortable` | `boolean` | Opt-in column sorting. When `true`, each header becomes a button that cycles unsorted → ascending → descending → unsorted. Off by default, so headers stay static and rows keep the order of `rows`. |
 
 ### Keyboard interaction
@@ -97,6 +97,11 @@ import Table from "react-dynamic-tables";
 - `Backspace` / `Delete` open the editor with the cell cleared (to delete).
 - `Enter` confirms the edit; `Escape` cancels it.
 - To read the edited value, pass `options.onCellEdit(rowId, columnId, value)`.
+- `rows` stays the source of truth: a confirmed edit is kept locally only while
+  the prop keeps sending the value it had when you confirmed. If a later `rows`
+  brings a different value for that cell (your backend normalized or rejected
+  it), the prop wins. That makes edit → persist → refetch work without
+  remounting the table.
 
 ### Auto-generating columns
 
