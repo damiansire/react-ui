@@ -1,20 +1,14 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "declaration": true,
     "declarationDir": "types",
     "emitDeclarationOnly": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "jsx": "react",
     "module": "ESNext",
     "moduleResolution": "node",
     "outDir": "dist",
     "rootDir": "src",
-    "skipLibCheck": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "target": "es2016"
   },
   "include": ["src"],

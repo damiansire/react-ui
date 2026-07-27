@@ -17,7 +17,8 @@
     "build-storybook": "storybook build",
     "typecheck": "tsc --noEmit",
     "test:types": "vitest run --typecheck",
-    "test": "vitest run --typecheck"
+    "test:coverage": "vitest run --coverage",
+    "test": "vitest run --typecheck --coverage"
   },
   "repository": {
     "type": "git",
@@ -48,6 +49,7 @@
     "@testing-library/user-event": "^14.4.3",
     "@types/jest-axe": "^3.5.9",
     "@types/react": "^18.2.15",
+    "@vitest/coverage-v8": "^1.6.1",
     "jest-axe": "^10.0.0",
     "jsdom": "^24.1.1",
     "postcss": "^8.4.26",
@@ -70,7 +72,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

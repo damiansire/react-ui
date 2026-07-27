@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Header } from "./interfaces/Header";
-import { Row } from "./interfaces/Row";
+import type { Header } from "./interfaces/Header";
+import type { Row } from "./interfaces/Row";
 import { getCell, getWrappedIndex } from "./libs/tableHelp";
 
 interface SelectedCell {

@@ -1,6 +1,6 @@
-import React from "react";
-import { Header } from "./Header";
-import { Row } from "./Row";
+import type React from "react";
+import type { Header } from "./Header";
+import type { Row } from "./Row";
 
 export interface TableProps {
     headers?: Header[];
@@ -17,7 +17,10 @@ export interface ICell {
     onDraftChange?: (value: string) => void;
     onCommit?: () => void;
     onCancel?: () => void;
-    editInputRef?: React.RefObject<HTMLInputElement>;
+    // `| undefined` explícito: con `exactOptionalPropertyTypes` un opcional no
+    // acepta que le pasen `undefined` a menos que el tipo lo diga. El caller
+    // pasa `undefined` cuando la celda no está en edición.
+    editInputRef?: React.RefObject<HTMLInputElement> | undefined;
 }
 
 

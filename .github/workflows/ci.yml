@@ -36,10 +36,14 @@ jobs:
         run: npm run -w react-dynamic-tables typecheck
 
       # Suite completa: unit + componente + a11y + type-tests + resolución .d.ts
-      # + presupuesto de bundle.
-      - name: Test
+      # + presupuesto de bundle, con el gate de cobertura (umbrales en
+      # vitest.config.ts: la corrida sale con exit 1 si la cobertura baja).
+      - name: Test + coverage gate
         run: npm test
 
-      # Compila Storybook con el addon de a11y habilitado (gate de a11y).
-      - name: Build Storybook (a11y addon)
+      # Sólo compila Storybook: verifica que las stories no estén rotas. NO
+      # ejecuta el addon de a11y (storybook build no corre addons), así que este
+      # step NO es un gate de accesibilidad; el gate de a11y real es
+      # Table.a11y.test.tsx (axe-core) dentro de la suite de arriba.
+      - name: Build Storybook (compila stories; no gatea a11y)
         run: npm run -w react-dynamic-tables build-storybook

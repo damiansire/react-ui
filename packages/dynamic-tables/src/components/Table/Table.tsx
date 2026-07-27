@@ -8,18 +8,18 @@ import React, {
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import "./table.css";
-import { Row } from "./interfaces/Row";
+import type { Row } from "./interfaces/Row";
 import { useTableSelection } from "./useTableSelection";
-import { Header } from "./interfaces/Header";
-import { ICell, TableProps } from "./interfaces/TableProps";
+import type { Header } from "./interfaces/Header";
+import type { ICell, TableProps } from "./interfaces/TableProps";
 import {
   getCell,
   getHeadersFromRows,
   isWritableCharacter,
   nextSortDirection,
   sortRows,
-  SortDirection,
 } from "./libs/tableHelp";
+import type { SortDirection } from "./libs/tableHelp";
 
 const Cell = ({
   value,

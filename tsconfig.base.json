@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  // Barra de strictness CENTRALIZADA del monorepo: los paquetes la extienden con
+  // una línea y NO re-declaran flags de strictness (un tsconfig hoja que los
+  // repite es drift). El set sale de backstage / directus / n8n (config estricta
+  // compartida en un solo lugar), remeda (todo lo opt-in prendido) y ariakit.
+  // Los flags de emisión (jsx, module, target, outDir, rootDir) viven en cada
+  // paquete, no acá.
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    // skipLibCheck sigue en true: apagarlo hoy typechequea los .d.ts de todo el
+    // toolchain de Storybook 7, que está fuera de nuestro control. Candidato a
+    // pasar a false cuando se actualice el toolchain.
+    "skipLibCheck": true
+  }
+}

@@ -1,5 +1,5 @@
-import { Header } from "../interfaces/Header";
-import { Row } from "../interfaces/Row";
+import type { Header } from "../interfaces/Header";
+import type { Row } from "../interfaces/Row";
 
 /**
  * Deriva las columnas a mostrar a partir de las claves de las filas.

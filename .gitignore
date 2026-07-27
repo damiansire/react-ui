@@ -18,3 +18,21 @@ coverage/
 
 # Sistema operativo
 .DS_Store
+
+# Secretos y credenciales: la protección viaja con el repo, no con la máquina.
+# Complementa el hygiene-gate de CI, que sólo mira lo YA trackeado.
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+
+# Artefactos de proceso (auditorías, scratch de sesión): no son deuda del repo
+# ni deben poder commitearse por accidente desde otro clon.
+_audit/
+_audits/
+AUDITORIA.md
+verify.sh
+claude-scratch-*
+claude-orch-*
