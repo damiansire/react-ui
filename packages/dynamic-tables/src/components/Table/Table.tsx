@@ -21,22 +21,21 @@ import {
 } from "./libs/tableHelp";
 import type { SortDirection } from "./libs/tableHelp";
 
-/** Celda en edición: qué fila y qué columna tienen el editor abierto. */
+/** Celda con el editor abierto. */
 interface EditingCell {
   trId: string;
   columnId: string;
 }
 
-/** Edición ya commiteada: el valor nuevo y el valor que traía la prop `rows`
- * cuando se commiteó (para saber después si la prop cambió y debe ganar). */
+/** Edición commiteada: el valor nuevo y el que traía la prop al commitear
+ * (si la prop cambia respecto de ese `base`, gana la prop). */
 interface CommittedEdit {
   value: string | number;
   base: string | number;
 }
 
-/** ¿El evento nació en el encabezado (p. ej. el botón de ordenar)? Los
- * listeners de teclado viven en el <table>, así que reciben por burbujeo lo que
- * pasa en el <thead>, que no es navegación ni edición de celdas. */
+/** ¿El evento nació en el <thead> (p. ej. el botón de ordenar)? Los listeners
+ * viven en el <table> y reciben por burbujeo lo que no es de la grilla. */
 const isFromHeader = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement && target.closest("thead") !== null;
 
@@ -101,17 +100,14 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       direction: SortDirection;
     } | null>(null);
 
-    // Valores ya comprometidos (commit) por celda. Se guarda el valor nuevo y
-    // el `base`: el valor que tenía la prop `rows` en el momento del commit.
-    // Ese `base` es lo que permite saber después si la prop cambió (el
-    // consumidor rechazó, normalizó o refrescó el dato) y devolverle la
-    // prioridad a la prop en vez de mostrar para siempre la copia interna.
+    // Valores commiteados por celda. El `base` permite detectar después que la
+    // prop cambió (rechazo, normalización, refresh) y devolverle la prioridad.
     const [editedCellValues, setEditedCellValues] = useState<{
       [rowId: string]: { [columnId: string]: CommittedEdit };
     }>({});
 
-    // Índice de las filas crudas por id. Resolver una celda debe ser O(1): con
-    // un `find` por celda el render era O(filas² × columnas).
+    // Índice por id: resolver una celda es O(1). Con un `find` por celda el
+    // render era O(filas² × columnas).
     const rawRowsById = useMemo(
       () => new Map<string, Row>(rows.map((row) => [row.id, row] as const)),
       [rows]
@@ -121,10 +117,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       rawRowsByIdRef.current = rawRowsById;
     }, [rawRowsById]);
 
-    // Fuente de verdad ÚNICA del render: la prop `rows` con las ediciones
-    // locales aplicadas encima. Una edición local solo sobrevive mientras la
-    // prop siga trayendo el mismo valor que había al commitear; si el
-    // consumidor devuelve otro valor, gana la prop.
+    // Fuente de verdad ÚNICA del render: `rows` con las ediciones locales
+    // encima. La edición local sobrevive solo mientras la prop no cambie.
     const effectiveRows = useMemo(() => {
       if (Object.keys(editedCellValues).length === 0) return rows;
       return rows.map((row) => {
@@ -148,9 +142,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       [effectiveRows]
     );
 
-    // Podar el overlay cuando cambia `rows`: sin esto crece sin techo (filas de
-    // datasets ya descartados) y sus valores viejos pueden reaparecer sobre
-    // filas nuevas que reusan el mismo id.
+    // Podar el overlay al cambiar `rows`: sin esto crece sin techo y sus
+    // valores viejos reaparecen sobre filas nuevas que reusan el id.
     useEffect(() => {
       setEditedCellValues((previous) => {
         let changed = false;
@@ -175,9 +168,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       });
     }, [rawRowsById]);
 
-    // Las filas tal como se muestran: ordenadas si hay `sort` activo, o las
-    // originales. Se ordena sobre `effectiveRows` (las que se pintan), no sobre
-    // la prop cruda: si no, la tabla ordenaría por valores que ya no muestra.
+    // Filas como se muestran. Se ordena sobre `effectiveRows` (las que se
+    // pintan), no sobre la prop cruda: si no, ordena por lo que no muestra.
     const displayedRows = useMemo(() => {
       if (!options.sortable || !sort) return effectiveRows;
       return sortRows(effectiveRows, sort.columnId, sort.direction);
@@ -195,10 +187,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     // Celda actualmente en modo edición (input abierto) y su borrador.
     const [editing, setEditing] = useState<EditingCell | null>(null);
     const [draftValue, setDraftValue] = useState<string>("");
-    // Espejos síncronos del estado de edición. Los handlers del editor
-    // (Enter, blur, desmontaje del input) pueden dispararse dos veces en el
-    // mismo tick, antes de que React aplique el `setState`: el ref es lo que
-    // garantiza UN solo commit por edición.
+    // Espejos síncronos: los handlers del editor (Enter, blur, desmontaje)
+    // pueden caer en el mismo tick; el ref garantiza UN commit por edición.
     const editingRef = useRef<EditingCell | null>(null);
     const draftValueRef = useRef<string>("");
 
@@ -259,8 +249,7 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     // Antes, las flechas no hacían nada hasta clickear con el mouse.
     const handleTableFocus = useCallback(
       (event: React.FocusEvent<HTMLTableElement>) => {
-        // Tabular hasta un botón de ordenar no es "entrar a la grilla": no debe
-        // seleccionar una celda que el usuario no eligió.
+        // Tabular hasta un botón de ordenar no es "entrar a la grilla".
         if (isFromHeader(event.target)) return;
         if (selectedCell.trId !== null) return;
         const firstRow = displayedRows[0];
@@ -306,9 +295,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     );
 
     const onCellEdit = options.onCellEdit;
-    // El commit NO vive dentro de un updater de `setState`: los updaters deben
-    // ser puros y React los invoca dos veces bajo StrictMode, lo que duplicaba
-    // `onCellEdit` (el único canal de salida del componente).
+    // El commit NO vive en un updater de `setState`: deben ser puros y React
+    // los invoca dos veces bajo StrictMode, lo que duplicaba `onCellEdit`.
     const commitEdit = useCallback(() => {
       const current = editingRef.current;
       if (!current) return;
@@ -334,18 +322,16 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       setEditing(null);
     }, []);
 
-    // `commitEdit` cambia de identidad con `onCellEdit`; el ref lo mantiene
-    // accesible desde callbacks que deben ser estables (el ref del editor).
+    // `commitEdit` cambia con `onCellEdit`; el ref lo hace accesible desde
+    // callbacks que deben ser estables (el ref del editor).
     const commitEditRef = useRef(commitEdit);
     useEffect(() => {
       commitEditRef.current = commitEdit;
     }, [commitEdit]);
 
-    // Ref callback ESTABLE del editor. Si el input desaparece sin pasar por
-    // blur (la fila salió de la ventana virtualizada al scrollear, o el
-    // consumidor dejó de renderizarla), el estado `editing` quedaba colgado
-    // para siempre: con `isEditing` en true los dos handlers de teclado cortan
-    // en seco y la tabla queda muerta. Commiteamos igual que en blur.
+    // Ref callback ESTABLE. Si el input desaparece sin blur (fila fuera de la
+    // ventana virtualizada, o el host deja de renderizarla), `editing` quedaba
+    // colgado y el teclado muerto. Commiteamos igual que en blur.
     const setEditInputRef = useCallback((node: HTMLInputElement | null) => {
       const previous = editInputRef.current;
       editInputRef.current = node;
@@ -413,10 +399,8 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     useEffect(() => {
       function pressKey(event: KeyboardEvent) {
         if (editing) return;
-        // El listener vive en el <table>, así que también recibe por burbujeo
-        // las teclas de los botones de ordenar (que son <th> adentro). Sin este
-        // filtro, Enter/Space sobre un header cancelaban la activación nativa
-        // del botón (preventDefault) y abrían el editor de otra celda.
+        // Sin este filtro, Enter/Space sobre un botón de ordenar cancelaban su
+        // activación nativa (preventDefault) y abrían el editor de otra celda.
         if (isFromHeader(event.target)) return;
         const { trId, columnId } = selectedCell;
         if (isWritableCharacter(event) && trId && columnId) {
@@ -457,10 +441,9 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           selectedCell.trId,
           selectedCell.columnId
         );
-        // Reenfocar si el foco quedó FUERA de la tabla. Al cerrar el editor,
-        // React ya desmontó el <input>, así que en este punto el foco está en
-        // <body>: la condición vieja (`activeElement` es un INPUT) no se
-        // cumplía nunca y el teclado quedaba muerto tras cada edición.
+        // Reenfocar si el foco quedó FUERA de la tabla. Al correr este efecto
+        // el <input> ya se desmontó y el foco está en <body>: exigir que
+        // `activeElement` fuera un INPUT no se cumplía nunca.
         if (cell && !tableRef.current?.contains(document.activeElement)) {
           cell.focus();
         }

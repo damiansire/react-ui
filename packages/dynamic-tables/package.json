@@ -82,7 +82,9 @@
   ],
   "types": "dist/index.d.ts",
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./dist/esm/index.js",
+    "./dist/cjs/index.js"
   ],
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.5"

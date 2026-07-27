@@ -5,7 +5,11 @@
     "skipLibCheck": true,
     "jsx": "react",
     "module": "ESNext",
-    "moduleResolution": "node",
+    // `bundler`, no `node` (node10): la resolución node10 IGNORA el campo
+    // `exports` de package.json y cae a `types`/`main`, así que el test podía
+    // dar verde con el `exports` map roto. `bundler` es lo que resuelven Vite,
+    // Next y TS 5 modernos, que es como resuelve un consumidor real.
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "types": ["react"],
     "target": "es2016"

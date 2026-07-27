@@ -94,8 +94,8 @@ export const useTableSelection = (
       // No interceptar la navegación mientras se edita una celda (el input
       // necesita las flechas para mover el caret).
       if (isEditing) return;
-      // Las flechas dentro del encabezado (botón de ordenar) no son navegación
-      // de celdas: el listener está en el <table> y recibe todo por burbujeo.
+      // El listener está en el <table> y recibe todo por burbujeo: lo que nace
+      // en el <thead> no es navegación de celdas.
       const eventTarget = event.target;
       if (
         eventTarget instanceof HTMLElement &&
@@ -186,13 +186,11 @@ export const useTableSelection = (
     (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
       const trId = event.currentTarget.getAttribute("row-id");
       // El `column-id` vive en el <td>, no en sus hijos: leerlo del target
-      // directo daba null al clickear el input del editor (o cualquier
-      // contenido de la celda) y eso borraba la selección y mataba las flechas.
+      // directo daba null al clickear el input y borraba la selección.
       const target = event.target as HTMLElement | null;
       const cell = target?.closest("td[column-id]") ?? null;
       const columnId = cell?.getAttribute("column-id") ?? null;
-      // Sin celda resoluble (click en un hueco de la fila): conservar la
-      // selección previa en vez de anularla.
+      // Sin celda resoluble: conservar la selección previa.
       if (columnId === null) return;
       setSelectedCell({ columnId, trId });
     },
