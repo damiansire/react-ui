@@ -21,6 +21,25 @@ import {
 } from "./libs/tableHelp";
 import type { SortDirection } from "./libs/tableHelp";
 
+/** Celda en edición: qué fila y qué columna tienen el editor abierto. */
+interface EditingCell {
+  trId: string;
+  columnId: string;
+}
+
+/** Edición ya commiteada: el valor nuevo y el valor que traía la prop `rows`
+ * cuando se commiteó (para saber después si la prop cambió y debe ganar). */
+interface CommittedEdit {
+  value: string | number;
+  base: string | number;
+}
+
+/** ¿El evento nació en el encabezado (p. ej. el botón de ordenar)? Los
+ * listeners de teclado viven en el <table>, así que reciben por burbujeo lo que
+ * pasa en el <thead>, que no es navegación ni edición de celdas. */
+const isFromHeader = (target: EventTarget | null): boolean =>
+  target instanceof HTMLElement && target.closest("thead") !== null;
+
 const Cell = ({
   value,
   isSelected,
@@ -82,14 +101,87 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       direction: SortDirection;
     } | null>(null);
 
+    // Valores ya comprometidos (commit) por celda. Se guarda el valor nuevo y
+    // el `base`: el valor que tenía la prop `rows` en el momento del commit.
+    // Ese `base` es lo que permite saber después si la prop cambió (el
+    // consumidor rechazó, normalizó o refrescó el dato) y devolverle la
+    // prioridad a la prop en vez de mostrar para siempre la copia interna.
+    const [editedCellValues, setEditedCellValues] = useState<{
+      [rowId: string]: { [columnId: string]: CommittedEdit };
+    }>({});
+
+    // Índice de las filas crudas por id. Resolver una celda debe ser O(1): con
+    // un `find` por celda el render era O(filas² × columnas).
+    const rawRowsById = useMemo(
+      () => new Map<string, Row>(rows.map((row) => [row.id, row] as const)),
+      [rows]
+    );
+    const rawRowsByIdRef = useRef(rawRowsById);
+    useEffect(() => {
+      rawRowsByIdRef.current = rawRowsById;
+    }, [rawRowsById]);
+
+    // Fuente de verdad ÚNICA del render: la prop `rows` con las ediciones
+    // locales aplicadas encima. Una edición local solo sobrevive mientras la
+    // prop siga trayendo el mismo valor que había al commitear; si el
+    // consumidor devuelve otro valor, gana la prop.
+    const effectiveRows = useMemo(() => {
+      if (Object.keys(editedCellValues).length === 0) return rows;
+      return rows.map((row) => {
+        const edits = editedCellValues[row.id];
+        if (!edits) return row;
+        let merged: Row | null = null;
+        for (const [columnId, edit] of Object.entries(edits)) {
+          if ((row[columnId] ?? "") !== edit.base) continue;
+          if (!merged) merged = { ...row };
+          merged[columnId] = edit.value;
+        }
+        return merged ?? row;
+      });
+    }, [rows, editedCellValues]);
+
+    const rowsById = useMemo(
+      () =>
+        new Map<string, Row>(
+          effectiveRows.map((row) => [row.id, row] as const)
+        ),
+      [effectiveRows]
+    );
+
+    // Podar el overlay cuando cambia `rows`: sin esto crece sin techo (filas de
+    // datasets ya descartados) y sus valores viejos pueden reaparecer sobre
+    // filas nuevas que reusan el mismo id.
+    useEffect(() => {
+      setEditedCellValues((previous) => {
+        let changed = false;
+        const next: typeof previous = {};
+        for (const [rowId, edits] of Object.entries(previous)) {
+          const row = rawRowsById.get(rowId);
+          if (!row) {
+            changed = true;
+            continue;
+          }
+          const kept: { [columnId: string]: CommittedEdit } = {};
+          for (const [columnId, edit] of Object.entries(edits)) {
+            if ((row[columnId] ?? "") !== edit.base) {
+              changed = true;
+              continue;
+            }
+            kept[columnId] = edit;
+          }
+          if (Object.keys(kept).length > 0) next[rowId] = kept;
+        }
+        return changed ? next : previous;
+      });
+    }, [rawRowsById]);
+
     // Las filas tal como se muestran: ordenadas si hay `sort` activo, o las
-    // originales. La edición se indexa por rowId (estable), así que un reorden
-    // no pierde valores ya editados. Todo lo demás (selección, foco, teclado)
-    // opera sobre ESTAS filas para seguir el orden visible.
+    // originales. Se ordena sobre `effectiveRows` (las que se pintan), no sobre
+    // la prop cruda: si no, la tabla ordenaría por valores que ya no muestra.
     const displayedRows = useMemo(() => {
-      if (!options.sortable || !sort) return rows;
-      return sortRows(rows, sort.columnId, sort.direction);
-    }, [rows, sort, options.sortable]);
+      if (!options.sortable || !sort) return effectiveRows;
+      return sortRows(effectiveRows, sort.columnId, sort.direction);
+    }, [effectiveRows, sort, options.sortable]);
 
     const toggleSort = useCallback((columnId: string) => {
       setSort((current) => {
@@ -100,17 +192,20 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       });
     }, []);
 
-    // Valores ya comprometidos (commit) por celda.
-    const [editedCellValues, setEditedCellValues] = useState<{
-      [rowId: string]: { [columnId: string]: string | number };
-    }>({});
-
     // Celda actualmente en modo edición (input abierto) y su borrador.
-    const [editing, setEditing] = useState<{
-      trId: string;
-      columnId: string;
-    } | null>(null);
+    const [editing, setEditing] = useState<EditingCell | null>(null);
     const [draftValue, setDraftValue] = useState<string>("");
+    // Espejos síncronos del estado de edición. Los handlers del editor
+    // (Enter, blur, desmontaje del input) pueden dispararse dos veces en el
+    // mismo tick, antes de que React aplique el `setState`: el ref es lo que
+    // garantiza UN solo commit por edición.
+    const editingRef = useRef<EditingCell | null>(null);
+    const draftValueRef = useRef<string>("");
+
+    const setDraft = useCallback((value: string) => {
+      draftValueRef.current = value;
+      setDraftValue(value);
+    }, []);
 
     // El componente siempre usa `internalRef` para su lógica interna (selección,
     // foco, getCell). El `setTableRef` mergea: setea internalRef y propaga el
@@ -128,7 +223,7 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
       },
       [forwardedRef]
     );
-    const editInputRef = useRef<HTMLInputElement>(null);
+    const editInputRef = useRef<HTMLInputElement | null>(null);
 
     // Contenedor con scroll propio cuando `virtualized` está activo. Sin
     // virtualización el scroll lo maneja el documento como siempre (no se usa).
@@ -162,17 +257,23 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     // Permite iniciar la navegación con teclado: al enfocar la tabla sin
     // selección previa, seleccionar la primera celda [0,0] (patrón APG Data Grid).
     // Antes, las flechas no hacían nada hasta clickear con el mouse.
-    const handleTableFocus = useCallback(() => {
-      if (selectedCell.trId !== null) return;
-      const firstRow = displayedRows[0];
-      const firstColumn = rendersHeaders[0];
-      if (firstRow && firstColumn) {
-        setSelectedCell({
-          trId: firstRow.id,
-          columnId: firstColumn.attributeName,
-        });
-      }
-    }, [selectedCell.trId, displayedRows, rendersHeaders, setSelectedCell]);
+    const handleTableFocus = useCallback(
+      (event: React.FocusEvent<HTMLTableElement>) => {
+        // Tabular hasta un botón de ordenar no es "entrar a la grilla": no debe
+        // seleccionar una celda que el usuario no eligió.
+        if (isFromHeader(event.target)) return;
+        if (selectedCell.trId !== null) return;
+        const firstRow = displayedRows[0];
+        const firstColumn = rendersHeaders[0];
+        if (firstRow && firstColumn) {
+          setSelectedCell({
+            trId: firstRow.id,
+            columnId: firstColumn.attributeName,
+          });
+        }
+      },
+      [selectedCell.trId, displayedRows, rendersHeaders, setSelectedCell]
+    );
 
     const isSelectedCell = useCallback(
       (columnId: string, rowId: string) => {
@@ -185,14 +286,10 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
 
     const getCommittedValue = useCallback(
       (trId: string, columnId: string): string | number => {
-        const editedRow = editedCellValues[trId];
-        if (editedRow && columnId in editedRow) {
-          return editedRow[columnId] ?? "";
-        }
-        const originalRow = rows.find((r) => r.id === trId);
-        return originalRow ? originalRow[columnId] ?? "" : "";
+        const row = rowsById.get(trId);
+        return row ? row[columnId] ?? "" : "";
       },
-      [editedCellValues, rows]
+      [rowsById]
     );
 
     const startEditing = useCallback(
@@ -201,32 +298,60 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           initial !== undefined
             ? initial
             : String(getCommittedValue(trId, columnId));
-        setDraftValue(base);
+        setDraft(base);
+        editingRef.current = { trId, columnId };
         setEditing({ trId, columnId });
       },
-      [getCommittedValue]
+      [getCommittedValue, setDraft]
     );
 
     const onCellEdit = options.onCellEdit;
+    // El commit NO vive dentro de un updater de `setState`: los updaters deben
+    // ser puros y React los invoca dos veces bajo StrictMode, lo que duplicaba
+    // `onCellEdit` (el único canal de salida del componente).
     const commitEdit = useCallback(() => {
-      setEditing((current) => {
-        if (!current) return null;
-        const { trId, columnId } = current;
-        setEditedCellValues((last) => ({
-          ...last,
-          [trId]: {
-            ...(last[trId] ?? {}),
-            [columnId]: draftValue,
-          },
-        }));
-        // Notificar hacia afuera el valor confirmado (lectura del consumidor).
-        onCellEdit?.(trId, columnId, draftValue);
-        return null;
-      });
-    }, [draftValue, onCellEdit]);
+      const current = editingRef.current;
+      if (!current) return;
+      const { trId, columnId } = current;
+      const value = draftValueRef.current;
+      editingRef.current = null;
+      setEditing(null);
+      const rawRow = rawRowsByIdRef.current.get(trId);
+      const base = rawRow ? rawRow[columnId] ?? "" : "";
+      setEditedCellValues((last) => ({
+        ...last,
+        [trId]: {
+          ...(last[trId] ?? {}),
+          [columnId]: { value, base },
+        },
+      }));
+      // Notificar hacia afuera el valor confirmado (lectura del consumidor).
+      onCellEdit?.(trId, columnId, value);
+    }, [onCellEdit]);
 
     const cancelEdit = useCallback(() => {
+      editingRef.current = null;
       setEditing(null);
+    }, []);
+
+    // `commitEdit` cambia de identidad con `onCellEdit`; el ref lo mantiene
+    // accesible desde callbacks que deben ser estables (el ref del editor).
+    const commitEditRef = useRef(commitEdit);
+    useEffect(() => {
+      commitEditRef.current = commitEdit;
+    }, [commitEdit]);
+
+    // Ref callback ESTABLE del editor. Si el input desaparece sin pasar por
+    // blur (la fila salió de la ventana virtualizada al scrollear, o el
+    // consumidor dejó de renderizarla), el estado `editing` quedaba colgado
+    // para siempre: con `isEditing` en true los dos handlers de teclado cortan
+    // en seco y la tabla queda muerta. Commiteamos igual que en blur.
+    const setEditInputRef = useCallback((node: HTMLInputElement | null) => {
+      const previous = editInputRef.current;
+      editInputRef.current = node;
+      if (node === null && previous !== null && editingRef.current) {
+        commitEditRef.current();
+      }
     }, []);
 
     // Al entrar en edición, llevar el caret al input.
@@ -261,10 +386,10 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
                   isSelected={isSelectedCell(data.attributeName, row.id)}
                   isEditing={cellIsEditing}
                   draftValue={cellIsEditing ? draftValue : ""}
-                  onDraftChange={setDraftValue}
+                  onDraftChange={setDraft}
                   onCommit={commitEdit}
                   onCancel={cancelEdit}
-                  editInputRef={cellIsEditing ? editInputRef : undefined}
+                  editInputRef={cellIsEditing ? setEditInputRef : undefined}
                 />
               );
             })}
@@ -277,8 +402,10 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
         getCommittedValue,
         editing,
         draftValue,
+        setDraft,
         commitEdit,
         cancelEdit,
+        setEditInputRef,
       ]
     );
 
@@ -286,6 +413,11 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
     useEffect(() => {
       function pressKey(event: KeyboardEvent) {
         if (editing) return;
+        // El listener vive en el <table>, así que también recibe por burbujeo
+        // las teclas de los botones de ordenar (que son <th> adentro). Sin este
+        // filtro, Enter/Space sobre un header cancelaban la activación nativa
+        // del botón (preventDefault) y abrían el editor de otra celda.
+        if (isFromHeader(event.target)) return;
         const { trId, columnId } = selectedCell;
         if (isWritableCharacter(event) && trId && columnId) {
           event.preventDefault();
@@ -325,8 +457,11 @@ const TableComponent = forwardRef<HTMLTableElement, TableProps>(
           selectedCell.trId,
           selectedCell.columnId
         );
-        // Solo reenfocar si el foco quedó fuera de una celda (p. ej. tras commit del input).
-        if (cell && document.activeElement?.tagName === "INPUT") {
+        // Reenfocar si el foco quedó FUERA de la tabla. Al cerrar el editor,
+        // React ya desmontó el <input>, así que en este punto el foco está en
+        // <body>: la condición vieja (`activeElement` es un INPUT) no se
+        // cumplía nunca y el teclado quedaba muerto tras cada edición.
+        if (cell && !tableRef.current?.contains(document.activeElement)) {
           cell.focus();
         }
       }

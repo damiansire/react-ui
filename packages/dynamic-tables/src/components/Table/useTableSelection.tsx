@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Header } from "./interfaces/Header";
 import type { Row } from "./interfaces/Row";
 import { getCell, getWrappedIndex } from "./libs/tableHelp";
@@ -82,16 +82,30 @@ export const useTableSelection = (
     []
   );
 
+  // Índice fila → posición. Evita un `findIndex` lineal en cada tecla.
+  const rowIndexById = useMemo(() => {
+    const index = new Map<string, number>();
+    rows.forEach((row, position) => index.set(row.id, position));
+    return index;
+  }, [rows]);
+
   const handleKey = useCallback(
     (event: KeyboardEvent) => {
       // No interceptar la navegación mientras se edita una celda (el input
       // necesita las flechas para mover el caret).
       if (isEditing) return;
+      // Las flechas dentro del encabezado (botón de ordenar) no son navegación
+      // de celdas: el listener está en el <table> y recibe todo por burbujeo.
+      const eventTarget = event.target;
+      if (
+        eventTarget instanceof HTMLElement &&
+        eventTarget.closest("thead") !== null
+      ) {
+        return;
+      }
       if (isMovementKey(event.key) && selectedCell.trId !== null) {
         event.preventDefault();
-        const rowIndex = rows.findIndex(
-          (row) => row.id === selectedCell.trId
-        );
+        const rowIndex = rowIndexById.get(selectedCell.trId) ?? -1;
         const { nextRowIndex, columnId } = getNextIndex(
           rowIndex,
           event.key,
@@ -146,7 +160,16 @@ export const useTableSelection = (
         }
       }
     },
-    [rows, selectedCell, headers, getNextIndex, tableRef, isEditing, rowVirtualizer]
+    [
+      rows,
+      rowIndexById,
+      selectedCell,
+      headers,
+      getNextIndex,
+      tableRef,
+      isEditing,
+      rowVirtualizer,
+    ]
   );
 
   useEffect(() => {
@@ -162,7 +185,15 @@ export const useTableSelection = (
   const handleBodyTrClick = useCallback(
     (event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
       const trId = event.currentTarget.getAttribute("row-id");
-      const columnId = (event.target as HTMLElement).getAttribute("column-id");
+      // El `column-id` vive en el <td>, no en sus hijos: leerlo del target
+      // directo daba null al clickear el input del editor (o cualquier
+      // contenido de la celda) y eso borraba la selección y mataba las flechas.
+      const target = event.target as HTMLElement | null;
+      const cell = target?.closest("td[column-id]") ?? null;
+      const columnId = cell?.getAttribute("column-id") ?? null;
+      // Sin celda resoluble (click en un hueco de la fila): conservar la
+      // selección previa en vez de anularla.
+      if (columnId === null) return;
       setSelectedCell({ columnId, trId });
     },
     []
