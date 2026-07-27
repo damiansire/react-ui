@@ -19,13 +19,13 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        # vitest bundles a nested rollup whose platform-specific optional dep
-        # (@rollup/rollup-linux-x64-gnu) npm fails to install from the lockfile
-        # (npm/cli#4828). Dropping the lockfile forces a fresh, platform-correct
-        # resolution — the exact workaround the error message recommends.
-        run: |
-          rm -f package-lock.json
-          npm install
+        # `npm ci`, no `npm install`: instala EXACTAMENTE el arbol del lockfile,
+        # con integrity check y sin poder mutarlo. El workaround anterior
+        # (borrar el lockfile por npm/cli#4828) ya no aplica: ese bug esta
+        # arreglado desde npm 10.4 (Node 20 trae npm 10.x) y el lockfile
+        # commiteado ya incluye las variantes por plataforma de rollup,
+        # @rollup/rollup-linux-x64-gnu entre ellas.
+        run: npm ci
 
       # Build primero: los type-tests, la resolución del .d.ts y el presupuesto
       # de bundle leen dist/.

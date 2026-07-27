@@ -27,13 +27,14 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        # vitest bundles a nested rollup whose platform-specific optional dep
-        # (@rollup/rollup-linux-x64-gnu) npm fails to install from the lockfile
-        # (npm/cli#4828). Dropping the lockfile forces a fresh, platform-correct
-        # resolution — same workaround as ci.yml.
-        run: |
-          rm -f package-lock.json
-          npm install
+        # Este job tiene el NPM_TOKEN en el entorno y produce el tarball que se
+        # publica: borrar el lockfile y resolver de cero hacia una instalacion
+        # irreproducible es el vector clasico de supply chain (cualquier version
+        # nueva dentro del rango semver de cualquier transitiva entra al runner
+        # y corre sus scripts de postinstall junto al token). `npm ci` instala
+        # el arbol exacto del lockfile con integrity check. El motivo del
+        # workaround viejo (npm/cli#4828) esta arreglado desde npm 10.4.
+        run: npm ci
 
       # Never publish an artifact this pipeline did not verify. Gate the
       # publish on the same checks ci.yml runs.
