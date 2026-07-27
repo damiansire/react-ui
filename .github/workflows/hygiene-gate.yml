@@ -20,11 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Sin .env / claude-scratch-* / temp_* / rewrite[0-9]*.py trackeados
+      - name: Sin secretos ni descartables de sesion trackeados
         shell: bash
         run: |
           set -e
-          MATCHES=$(git ls-files | grep -E '(^|/)\.env$|(^|/)claude-scratch-[^/]*$|(^|/)temp_[^/]*$|(^|/)rewrite[0-9]+\.py$' || true)
+          # `\.env$` anclado al nombre exacto dejaba pasar .env.local,
+          # .env.production y compania, que son los nombres reales que se
+          # commitean por accidente. Se agregan .npmrc (token de npm), claves
+          # privadas (*.pem, *.key, id_rsa) y se exceptuan los .env de ejemplo.
+          MATCHES=$(git ls-files \
+            | grep -E '(^|/)\.env($|\.)|(^|/)\.npmrc$|\.pem$|\.key$|(^|/)id_rsa$|(^|/)claude-scratch-[^/]*$|(^|/)temp_[^/]*$|(^|/)rewrite[0-9]+\.py$' \
+            | grep -vE '(^|/)\.env\.(example|sample|template)$' || true)
           if [ -n "$MATCHES" ]; then
             echo "Archivos trackeados que no deberian estar en el repo:"
             echo "$MATCHES"
